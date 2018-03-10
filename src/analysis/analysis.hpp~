@@ -1,0 +1,33 @@
+/* GT_EXTERNAL_LEGEND(2010) */
+#ifndef tsl_tools_llvm_wrappeddomain_abs_interp_src_llvm_wrappeddomain_abs_interp_hpp
+#define tsl_tools_llvm_wrappeddomain_abs_interp_src_llvm_wrappeddomain_abs_interp_hpp
+
+//#include "swyx/src/swyx.hpp"
+#include "swyx/src/utils/cmdline.hpp"
+
+int llvm_limdisjpoly_abs_interp();
+
+extern const char* cmdlineparam_filename;
+extern unsigned cmdlineparam_max_disjunctions;
+extern bool cmdlineparam_disable_wrapping;
+extern bool cmdlineparam_use_oct;
+extern bool cmdlineparam_use_red_prod;
+extern bool cmdlineparam_use_fwpds;
+extern bool cmdlineparam_use_extrapolation;
+extern bool cmdlineparam_perform_narrowing;
+extern bool cmdlineparam_array_bounds_check;
+int X86CALL handle_cmdlineparam_debug_print_level(const char* k);
+int X86CALL handle_cmdlineparam_disable_wrapping();
+int X86CALL handle_cmdlineparam_use_oct();
+int X86CALL handle_cmdlineparam_use_red_prod();
+int X86CALL handle_cmdlineparam_use_fwpds();
+int X86CALL handle_cmdlineparam_filename(const char* k);
+int X86CALL handle_cmdlineparam_max_disjunctions(const char*);
+int X86CALL handle_cmdlineparam_use_extrapolation();
+int X86CALL handle_cmdlineparam_perform_narrowing();
+int X86CALL handle_cmdlineparam_array_bounds_check();
+
+extern bool cmdlineparam_allow_phis;
+int X86CALL handle_cmdlineparam_allow_phis();
+
+#endif // tsl_tools_llvm_wrappeddomain_abs_interp_src_llvm_wrappeddomain_abs_interp_hpp

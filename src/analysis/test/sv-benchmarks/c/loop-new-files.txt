@@ -1,0 +1,8 @@
+loop-new/count_by_1_true-unreach-call.c
+loop-new/count_by_nondet_true-unreach-call.c
+loop-new/count_by_1_variant_true-unreach-call.c
+loop-new/gauss_sum_true-unreach-call.c
+loop-new/count_by_2_true-unreach-call.c
+loop-new/half_true-unreach-call.c
+loop-new/count_by_k_true-unreach-call.c
+loop-new/nested_true-unreach-call.c

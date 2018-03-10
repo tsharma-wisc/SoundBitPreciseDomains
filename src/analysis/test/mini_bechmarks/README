@@ -1,0 +1,7 @@
+To generate file.bc from a file.c:
+..path..to..llvm/build/bin/clang -c -O -emit-llvm file.c -o file.bc
+
+To call this tool on a bc file "file":
+LD_LIBRARY_PATH="/unsup/libgmp-4.3.2/i386_rhel5/lib;/scratch/tsharma/tsl-sandbox/tsl-sandbox/tsl/third_party/ppl-1.1/src/.libs;/s/gcc-4.8.4/lib" ../../build/scons/gprof/main.exe -filename file.bc -max-disjunctions 1
+
+

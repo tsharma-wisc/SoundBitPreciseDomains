@@ -1,0 +1,119 @@
+/* GT_EXTERNAL_LEGEND(2010) */
+#include "gtr/src/lang/gtr_config.h"
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+
+#include "tsl/tools/llvm_wrappeddomain_abs_interp/src/llvm_wrappeddomain_abs_interp.hpp"
+#include "tsl/uwr/debug/DebugOptions.hpp"
+
+#if !defined(_WIN32)
+#include "strings.h"
+#define stricmp strcasecmp
+#endif
+
+/**
+ * Returns true if the string that is passed is either 'yes' or 'true'
+ * by case-insensitive comparison.
+ **/
+bool is_yes(const char* k) {
+    return (stricmp(k, "yes") == 0) || (stricmp(k, "true") == 0);
+}
+
+/**
+ * Returns true if the string that is passed is either 'yes' or 'true'
+ * by case-insensitive comparison.
+ **/
+bool is_no(const char* k) {
+    return (stricmp(k, "no") == 0) || (stricmp(k, "false") == 0);
+}
+
+int X86CALL handle_cmdlineparam_debug_print_level(const char* k) {
+  if (!k) {
+    std::cout << "ERROR: The command line flag -debug_print_level expects an argument!\n";
+    return 1;
+  }
+  sscanf(k, "%u", &debug_print_level);
+  return 0;
+}
+
+bool cmdlineparam_use_oct = false;
+int X86CALL handle_cmdlineparam_use_oct() {
+  cmdlineparam_use_oct = true;
+  return 0;
+}
+
+bool cmdlineparam_use_red_prod = false;
+int X86CALL handle_cmdlineparam_use_red_prod() {
+  cmdlineparam_use_red_prod = true;
+  return 0;
+}
+
+bool cmdlineparam_use_fwpds = false;
+int X86CALL handle_cmdlineparam_use_fwpds() {
+  cmdlineparam_use_fwpds = true;
+  return 0;
+}
+
+// This flag specifies whether to disable wrapping while performing analysis.
+// This can lead to unsound result.
+bool cmdlineparam_disable_wrapping = false;
+int X86CALL handle_cmdlineparam_disable_wrapping() {
+  cmdlineparam_disable_wrapping = true;
+  return 0;
+}
+
+// This flag specifies whether to use extrapolation operator instead of widening
+// The advantage is that it can take number of maximum allowed disjunctions as parameter,
+// and thus extrapolation is more
+bool cmdlineparam_use_extrapolation = false;
+int X86CALL handle_cmdlineparam_use_extrapolation() {
+  cmdlineparam_use_extrapolation = true;
+  return 0;
+}
+
+// This flag specifies whether to perform narrowing (ie downward iteration sequence) 
+// before querying of the unreachable points. 
+// This can provide more precision at the expense of some efficiency.
+bool cmdlineparam_perform_narrowing = false;
+int X86CALL handle_cmdlineparam_perform_narrowing() {
+  cmdlineparam_perform_narrowing = true;
+  return 0;
+}
+
+// Cmdline parameter specifying whether to check if the assertions added as array bounds check
+// are unreachable
+bool cmdlineparam_array_bounds_check = false;
+int X86CALL handle_cmdlineparam_array_bounds_check() {
+  cmdlineparam_array_bounds_check = true;
+  return 0;
+}
+
+// Cmdline parameter specifying whether to change the analysis to expect phis
+bool cmdlineparam_allow_phis = false;
+int X86CALL handle_cmdlineparam_allow_phis() {
+  cmdlineparam_allow_phis = true;
+  return 0;
+}
+
+unsigned cmdlineparam_max_disjunctions = 1;
+int X86CALL handle_cmdlineparam_max_disjunctions(const char* k) {
+  if (!k) {
+    std::cout << "ERROR: max_disjunctions not specified!\n";
+    return 1;
+  }
+  sscanf(k, "%u", &cmdlineparam_max_disjunctions);
+  std::cout << "\nGot max_disjunctions " << cmdlineparam_max_disjunctions << " from k = " << k;
+  return 0;
+}
+
+const char* cmdlineparam_filename = "";
+int X86CALL handle_cmdlineparam_filename(const char* k) {
+  if (!k) {
+    std::cout << "ERROR: filename (ie, the LLVM bitcode file) not specified!\n";
+    return 1;
+  }
+  cmdlineparam_filename = k;
+  std::cout << "\nGot filename "<< cmdlineparam_filename << " from k = " << k;
+  return 0;
+}
