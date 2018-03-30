@@ -76,7 +76,7 @@ def main(argv):
 
 
    env = dict(os.environ)
-   env['LD_LIBRARY_PATH'] = '/unsup/libgmp-4.3.2/i386_rhel5/lib;/scratch/tsharma/tsl-sandbox/tsl-sandbox/tsl/third_party/ppl-1.1/src/.libs;/s/gcc-4.8.4/lib'
+   env['LD_LIBRARY_PATH'] = ''
 
    inputfile = open(inputfilestr)
 

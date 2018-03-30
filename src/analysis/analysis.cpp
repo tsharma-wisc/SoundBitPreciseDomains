@@ -11,7 +11,6 @@
 
 #include "src/reinterp/WrappedDomainWPDSCreator.hpp"
 #include "src/abstract_domain/pointset_powerset/pointset_powerset_av.hpp"
-#include "src/abstract_domain/ks/ks_av.hpp"
 #include "src/abstract_domain/common/ReducedProductAbsVal.hpp"
 #include "src/abstract_domain/common/BitpreciseWrappedAbstractValue.hpp"
 
@@ -38,7 +37,7 @@ int ProcessCommandLineArgs(int argc, char** argv);
 
 // Lookup path summary for a key in a WFA
 sem_elem_t GetPathSummary(wali::wfa::WFA* fa_prog, const wali::Key& program, const wali::Key& key) {
-  UWAssert::shouldNeverHappen(fa_prog == NULL);
+  assert(fa_prog != NULL);
 
   bool ispost = (fa_prog->getQuery() == wali::wfa::WFA::REVERSE);
 
@@ -86,7 +85,7 @@ namespace wali {
       RuleCopierWithWitness(const WPDS* w) {
         // wali::wpds::Wrapper* wrapper = new wali::witness::WitnessWrapper();
         const ewpds::EWPDS* ew = dynamic_cast<const ewpds::EWPDS*>(w);
-        UWAssert::shouldNeverHappen(!ew); // Cannot handle anything other than EWPDS atm
+        assert(ew); // Cannot handle anything other than EWPDS atm
         pds = new ewpds::EWPDS(/*wrapper*/);
       }
       WPDS* getWPDS() { return pds;}
@@ -194,7 +193,7 @@ namespace wali {
              && (it_t->to() == t->to()))
             root_t = it_t;
         }
-        UWAssert::shouldNeverHappen(!root_t);
+        assert(root_t);
         InvestigateWitness(wit, root_t);
       }
 
@@ -249,12 +248,12 @@ namespace wali {
             root_t->print(std::cout << ", root_t:" << root_t << ";");
             {
               std::map<const ITrans*, std::set<const ITrans*> >::iterator pred_child_it = pred_map_.find(child_t);
-              UWAssert::shouldNeverHappen(pred_child_it == pred_map_.end());
+              assert(pred_child_it != pred_map_.end());
               pred_child_it->second.insert(root_t);
             }
             {
               std::map<const ITrans*, std::set<const ITrans*> >::iterator succ_root_it = succ_map_.find(root_t);
-              UWAssert::shouldNeverHappen(succ_root_it == succ_map_.end());
+              assert(succ_root_it != succ_map_.end());
               succ_root_it->second.insert(child_t);
             }
           }
@@ -380,7 +379,7 @@ namespace wali {
           const ITrans* t = &(trans->getTrans());
           Trans crt_trans_wfa;
           bool found = fa_->find(t->from(), t->stack(), t->to(), crt_trans_wfa);
-          UWAssert::shouldNeverHappen(!found);
+          assert(found);
           return crt_trans_wfa.weight();
         }
  
@@ -427,7 +426,7 @@ namespace wali {
           result = merge_fn->apply_f(caller, callee);
           return result;
         }
-        UWAssert::shouldNeverHappen();
+        assert(false);
         return NULL;
       }
 
@@ -439,11 +438,11 @@ namespace wali {
 
           Trans crt_trans_fa_witness;
           bool found_fa_witness = fa_witness_->find(crt_trans->from(), crt_trans->stack(), crt_trans->to(), crt_trans_fa_witness);
-          UWAssert::shouldNeverHappen(!found_fa_witness);
+          assert(found_fa_witness);
 
           Trans crt_trans_fa;
           bool found_fa = fa_->find(crt_trans->from(), crt_trans->stack(), crt_trans->to(), crt_trans_fa);
-          UWAssert::shouldNeverHappen(!found_fa);
+          assert(found_fa);
 
           sem_elem_t old_val = crt_trans_fa.weight();
 
@@ -472,11 +471,11 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
 
   std::stringstream ss_timer;
   ss_timer << "AbstractInterpt_timer_maxdisj_" << max_disjunctions;
-  uwr::Timer ai_timer(ss_timer.str(), std::cout, true);
+  utils::Timer ai_timer(ss_timer.str(), std::cout, true);
 
   // Construct WPDS for the module via reinterpretation
   Vocabulary dum_voc;
-  dum_voc.insert(DimensionMap::GetInstance()->GetKey32(CommonConc1LevelCIR::MkQFBVSymbol32(std::string("tmp"), std::string(""), CBTI_INT64(0))));
+  dum_voc.insert(DimensionKey(std::string("tmp"), 0, utils::thirty_two));
 
   abstract_value::BitpreciseWrappedAbstractValue::disable_wrapping = cmdlineparam_disable_wrapping;
   // Use pointset powerset of octagon or polyhedra domain to perform analysis
@@ -511,7 +510,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   }
   std::cout << " to perform analysis with max_disjunctions:" << cmdlineparam_max_disjunctions;
 
-  uwr::Timer wpds_construct_timer("wpds_construction", std::cout, false);
+  utils::Timer wpds_construct_timer("wpds_construction", std::cout, false);
   llvm_abstract_transformer::WrappedDomainWPDSCreator cr(std::move(M), av, filename, cmdlineparam_array_bounds_check);
   wali::wpds::WPDS* pds = cr.createWPDS(cmdlineparam_use_fwpds);
   double wpds_construction_time = wpds_construct_timer.elapsed();
@@ -574,17 +573,10 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   input_stats_map.push_back(std::make_pair("Num Calls", ss.str()));
 
   // Print user input information
-  if(cmdlineparam_use_red_prod) {
-    if(cmdlineparam_use_oct)
-      input_stats_map.push_back(std::make_pair("Abstraction", "RedProd<Oct,KS>"));
-    else
-      input_stats_map.push_back(std::make_pair("Abstraction", "RedProd<Poly,KS>"));
-  } else {
-    if(cmdlineparam_use_oct)
-      input_stats_map.push_back(std::make_pair("Abstraction", "Oct"));
-    else
-      input_stats_map.push_back(std::make_pair("Abstraction", "Poly"));
-  }
+  if(cmdlineparam_use_oct)
+    input_stats_map.push_back(std::make_pair("Abstraction", "Oct"));
+  else
+    input_stats_map.push_back(std::make_pair("Abstraction", "Poly"));
   ss.str(std::string()); ss << cmdlineparam_max_disjunctions;
   input_stats_map.push_back(std::make_pair("Num Disjs", ss.str()));
 
@@ -636,7 +628,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
 
  
   /********************************Poststar*******************************/
-  uwr::Timer poststar_timer("poststar", std::cout, false);
+  utils::Timer poststar_timer("poststar", std::cout, false);
 #ifdef USE_AKASH_FWPDS
   pds->poststar(*fa_prog, *fa_prog);
 #else
@@ -659,7 +651,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   }
 
   /********************************Path summary*******************************/
-  uwr::Timer pathsummary_timer("pathsummary", std::cout, false);
+  utils::Timer pathsummary_timer("pathsummary", std::cout, false);
   fa_prog->path_summary();
   double pathsummary_time = pathsummary_timer.elapsed();
 
@@ -681,7 +673,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
 
 
   /**************************Perform Downward Iteration Sequence********************/
-  uwr::Timer dis_timer("Downward Iteration Sequence", std::cout, false);
+  utils::Timer dis_timer("Downward Iteration Sequence", std::cout, false);
   if(cmdlineparam_perform_narrowing) {
     // TODO: Move the downward iteration sequence to a separate function
     // Copy wfa to a new wfa where the new wfa has witness weights
@@ -702,7 +694,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
     std::cout << "\n\n";
 
     // Perform post star operation
-    uwr::Timer dis_poststar_timer("DIS Poststar", std::cout, false);
+    utils::Timer dis_poststar_timer("DIS Poststar", std::cout, false);
 #ifdef USE_AKASH_FWPDS
     pds_cp_witness->poststar(*fa_prog_cp_witness, *fa_prog_cp_witness);
 #else
@@ -738,7 +730,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
 
   /***********************************Query***********************************/
   // Get the total number of proved assertions in the program in proved_unreachable_keys
-  uwr::Timer query_timer("Query", std::cout, false);
+  utils::Timer query_timer("Query", std::cout, false);
   std::set<wali::Key> proved_unreachable_keys;
   for(std::set<wali::Key>::const_iterator it = unreachable_keys.begin(); it != unreachable_keys.end(); it++) {
     wali::Key unreachable_key = *it;
