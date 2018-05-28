@@ -191,50 +191,50 @@ namespace llvm_abstract_transformer {
 
     // Miscellaneous Instructions (Not handled)
     void abstractExecuteFence(llvm::FenceInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteAtomicCmpXchg(llvm::AtomicCmpXchgInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteAtomicRMW(llvm::AtomicRMWInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteAddrSpaceCast(llvm::AddrSpaceCastInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteUserOp1(llvm::Instruction &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteUserOp2(llvm::Instruction &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteResume(llvm::ResumeInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     void abstractExecuteLandingPad(llvm::LandingPadInst &I) {
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     // Not supported Executionengine functions
     llvm::GenericValue runFunction(llvm::Function* f, llvm::ArrayRef<llvm::GenericValue> arr) override {
-      UWAssert::shouldNeverHappen();
+      assert(false);
       return llvm::GenericValue(0);
     }
  
     void* getPointerToNamedFunction(llvm::StringRef str, bool b) override {
-      UWAssert::shouldNeverHappen();
+      assert(false);
       return nullptr;
     }
 
     void *getPointerToFunction(llvm::Function *F) override {
-      UWAssert::shouldNeverHappen();
+      assert(false);
       return F;
     }
 
