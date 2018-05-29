@@ -1,6 +1,9 @@
 #include "AvSemiring.hpp"
 #include "utils/timer/timer.hpp"
+#include "utils/debug/DebugOptions.hpp"
+#include <sstream>
 
+using namespace abstract_domain;
 AvSemiringStats AvSemiring::av_semiring_stats_;
 
 AvSemiring::AvSemiring(ref_ptr<AbstractValue> av, std::string from, std::string to, WideningType t, bool is_one)
@@ -23,7 +26,7 @@ sem_elem_t AvSemiring::combine(SemElem * op2_sem) {
   if(op2_sem == this)
     return this;
 
-  AvSemiring* op2 = dynamic_cast<AvSemiring*>(op2_sem);
+  AvSemiring* op2 = static_cast<AvSemiring*>(op2_sem);
   assert((t_ != WIDENING_RULE) && (op2->t_ != WIDENING_RULE));
 
   DEBUG_PRINTING(DBG_PRINT_OPERATIONS,
@@ -96,7 +99,7 @@ sem_elem_t AvSemiring::extend(SemElem * op2_se) {
 
   av_semiring_stats_.num_extend_calls_++;
 
-  const AvSemiring* op2 = dynamic_cast<AvSemiring*>(op2_se);
+  const AvSemiring* op2 = static_cast<AvSemiring*>(op2_se);
 
   // Check for bottom
   if(av_->IsBottom() || op2->av_->IsBottom()) 
@@ -189,7 +192,7 @@ bool AvSemiring::isEqual(SemElem* op2) const {
                    std::cout << "\nequality result:1\n";);
     return true;
   }
-  const AvSemiring* op2_av = dynamic_cast<const AvSemiring*>(op2);
+  const AvSemiring* op2_av = static_cast<const AvSemiring*>(op2);
 
   // Instilled in place so that FWPDS doesn' remove widening rules that happen to be identity
   if(t_ != op2_av->t_) {
@@ -231,7 +234,9 @@ ref_ptr<AvSemiring::AbstractValue> AvSemiring::GetAbstractValue() {
 }
 
 void AvSemiring::prettyPrint(FILE *fp, unsigned nTabs) {
-  av_->prettyPrint(fp, nTabs);
+  std::stringstream ss;
+  print(ss);
+  fprintf(fp, ss.str().c_str());
   return;
 }
 

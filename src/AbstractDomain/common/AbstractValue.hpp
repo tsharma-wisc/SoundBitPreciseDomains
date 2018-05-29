@@ -4,13 +4,14 @@
 #include <cassert>
 #include <memory>
 #include <vector>
-#include "AbsConseqStrategy.hpp"
 #include "dimension.hpp"
 #include "wali/SemElem.hpp"
 #include "wali/Countable.hpp"
 
+template <typename T>
+using ref_ptr = wali::ref_ptr<T>;
+
 namespace abstract_domain {
-typedef wali::ref_ptr ref_ptr;
 class AbstractValue : public wali::Countable {
 
 public:
@@ -62,7 +63,7 @@ public:
   virtual bool ImplementsExtend();
 
   // Default implementation of extend returns an error
-  virtual ref_ptr<AbstractValue> Extend(const ref_ptr<AbstractValue> &that);
+  virtual ref_ptr<AbstractValue> Extend(const ref_ptr<AbstractValue> &that) const;
   
   // Add equality constraint
   virtual void AddEquality     (const DimensionKey & v1, 
@@ -70,8 +71,6 @@ public:
 
   // In-place reduction
   virtual void Reduce() = 0;
-  // reduce this with constraints from that
-  virtual void Reduce(const ref_ptr<AbstractValue>& that);
 
   // project: project onto Vocabulary v. 
   virtual void Project         (const Vocabulary & v) = 0;
@@ -81,13 +80,12 @@ public:
 
   //// In - place Vocabulary manipulation operations
   //// on AbstractValue
-  virtual unsigned NumVars          () const;
+  virtual size_t NumVars          () const;
   void AddDimension(const DimensionKey & k);
   virtual void     AddVocabulary    (const Vocabulary &)                   = 0;
   // Take all the key and replace their version numbers from old_ver to new_ver and then add
   // them to the abstract value. 
   void     AddVersion       (const Version & old_ver, const Version & new_ver);
-  void     AddDimension     (const DimensionKey & k);
 
   //Replace version a with b in the Abstract Value's vocabulary
   void ReplaceVersion   (const Version & o, const Version & n);
@@ -140,7 +138,7 @@ public:
   /*******************************************************************************************************/
 
   // Ref counting
-  RefCounter count;
+  ref_ptr<AbstractValue>::count_t count;
 protected:
   // members
 

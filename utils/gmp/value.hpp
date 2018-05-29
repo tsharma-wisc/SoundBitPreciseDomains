@@ -1,13 +1,21 @@
 #ifndef utils_gmp_value_hpp
 #define utils_gmp_value_hpp
 
-#include<iostream>
+#include <iostream>
 
-typedef unsigned long long UINT64;
-typedef unsigned int UINT32;
-typedef unsigned short UINT16;
-typedef unsigned char UINT8;
+// Just get the fixed-width types using stdint
+// TODO: Bad because stdint is deprecated, but this is a quick fix.
+#include <stdint.h>
+typedef uint64_t LONG_UINT;
+typedef uint32_t UINT;
+typedef uint16_t USHORT;
+typedef uint8_t  UCHAR;
+typedef int64_t  LONG_INT;
+typedef int32_t  INT;
+typedef int16_t  SHORT;
+typedef int8_t   CHAR;
 typedef bool UINT1;
+////////////////////////////////////////////////////////////
 
 namespace utils {
 
@@ -21,7 +29,7 @@ class Value {
 public:
   // Default empty constructor (TODO: Delete as this will create bitsize issues in future)
   Value(const Bitsize size = thirty_two);
-  Value(const LONG_UINT val);
+  //Value(const LONG_UINT val);
   Value(const Bitsize size, const LONG_UINT val);
   ~Value();
 

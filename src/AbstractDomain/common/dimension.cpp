@@ -28,6 +28,10 @@ namespace abstract_domain {
     return (!(*this < that) && !(that < *this));
   }
 
+  utils::Bitsize DimensionKey::GetBitsize() const {
+    return bitsize;
+  }
+
   void UnionVocabularies(const Vocabulary &first, const Vocabulary &second, Vocabulary &res) {
     res.clear();
     std::insert_iterator<Vocabulary> res_ins(res, res.begin());
@@ -48,7 +52,7 @@ namespace abstract_domain {
   DimensionKey replaceVersion(const DimensionKey& k, Version from, Version to) {
     Version old_ver = k.ver;
     if(old_ver == from) {
-      return DimensionKey(k.name, to, k.s);
+      return DimensionKey(k.name, to, k.bitsize);
     }
     return k;
   }
@@ -135,7 +139,7 @@ namespace abstract_domain {
   }
 
   std::ostream & print(std::ostream & out, const DimensionKey& k) {
-    out << std::dec << k.name << "_" << k.ver << "_" << k.s;
+    out << std::dec << k.name << "_" << k.ver << "_" << k.bitsize;
     return out;
   }
 

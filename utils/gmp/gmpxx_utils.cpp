@@ -45,41 +45,41 @@ namespace utils {
     return (LONG_INT)mpz_get_ull(n); /* just use unsigned version */
   }
 
-  mpz_class convert_to_mpz(utils::Value c, bool is_signed) {
+  mpz_class convert_to_mpz(Value c, bool is_signed) {
     mpz_t ret_mpz_t;
     mpz_init(ret_mpz_t);
 
     switch(c.GetBitsize())
       {
-      case utils::sixty_four:
+      case sixty_four:
         mpz_clear(ret_mpz_t); // Free memory
   
         // 64 bits need special function as GMP does not provide that interface by default
-        return is_signed? mpz_set_sll((LONG_INT)(c.bv64_.get_value())): mpz_set_ull((LONG_UINT)(c.bv64_.get_value()));
+        return is_signed? mpz_set_sll((LONG_INT)c.bv64_): mpz_set_ull((LONG_UINT)c.bv64_);
         break;
-      case utils::thirty_two:
+      case thirty_two:
         if(is_signed) {
-          mpz_set_si(ret_mpz_t, (INT)(c.bv32_.get_value()));
+          mpz_set_si(ret_mpz_t, (INT)c.bv32_);
         } else {
-          mpz_set_ui(ret_mpz_t, (UINT)(c.bv32_.get_value()));
+          mpz_set_ui(ret_mpz_t, (UINT)c.bv32_);
         }
         break;
-      case utils::sixteen:
+      case sixteen:
         if(is_signed) {
-          mpz_set_si(ret_mpz_t, (long int)(SHORT)(c.bv16_.get_value()));
+          mpz_set_si(ret_mpz_t, (long int)(SHORT)(c.bv16_));
         } else {
-          mpz_set_ui(ret_mpz_t, (long unsigned int)(USHORT)(c.bv16_.get_value()));
+          mpz_set_ui(ret_mpz_t, (long unsigned int)(USHORT)(c.bv16_));
         }
         break;
-      case utils::eight:
+      case eight:
         if(is_signed) {
-          mpz_set_si(ret_mpz_t, (long int)(CHAR)(c.bv8_.get_value()));
+          mpz_set_si(ret_mpz_t, (long int)(CHAR)(c.bv8_));
         } else {
-          mpz_set_ui(ret_mpz_t, (long unsigned int)(UCHAR)(c.bv8_.get_value()));
+          mpz_set_ui(ret_mpz_t, (long unsigned int)(UCHAR)(c.bv8_));
         }
         break;
-      case utils::one:
-        mpz_set_si(ret_mpz_t, (long int)(c.bv1_.get_value()));
+      case one:
+        mpz_set_si(ret_mpz_t, (long int)(c.bv1_));
         break;
       }
 
@@ -88,91 +88,91 @@ namespace utils {
     return ret;
   }
 
-  utils::Value convert_to_value(mpz_class c, Bitsize b, bool is_signed) {
+  Value convert_to_value(mpz_class c, Bitsize b, bool is_signed) {
     switch(b) {
-    case utils::sixty_four: {
+    case sixty_four: {
       LONG_UINT val;
       if(is_signed)
         val = (LONG_UINT)mpz_get_sll(c);
       else
         val = mpz_get_ull(c);
-      return utils::Value(b, val);
+      return Value(b, val);
     }
-    case utils::thirty_two: {
+    case thirty_two: {
       UINT val;
       if(is_signed)
         val = (UINT)mpz_get_si(c.get_mpz_t());
       else
         val = mpz_get_ui(c.get_mpz_t());
-      return utils::Value(BV32(val));
+      return Value(b, val);
     }
-    case utils::sixteen: {
+    case sixteen: {
       USHORT val;
       if(is_signed)
         val = (USHORT)mpz_get_si(c.get_mpz_t());
       else
         val = (USHORT)mpz_get_ui(c.get_mpz_t());
-      return utils::Value(BV16(val));
+      return Value(b, val);
     }
-    case utils::eight: {
+    case eight: {
       UCHAR val;
       if(is_signed)
         val = (UCHAR)mpz_get_si(c.get_mpz_t());
       else
         val = (UCHAR)mpz_get_ui(c.get_mpz_t());
-      return utils::Value(BV8(val));
+      return Value(b, val);
     }
-    case utils::one: {
+    case one: {
       UCHAR val;
       if(is_signed)
         val = (UCHAR)mpz_get_si(c.get_mpz_t());
       else
         val = (UCHAR)mpz_get_ui(c.get_mpz_t());
-      return utils::Value(BV1(val));
+      return Value(b, val);
     }
     }
-    return utils::Value(b, 0ull);
+    return Value(b, 0ull);
   }
 
-  utils::Value GetMaxInt(utils::Bitsize b, bool is_signed) {
-    utils::Value max;
+  Value GetMaxInt(Bitsize b, bool is_signed) {
+    Value max;
     switch(b) {
-    case utils::sixty_four:
-      max = is_signed? BV64(0x7fffffffffffffffll): BV64(0xffffffffffffffffull); 
+    case sixty_four:
+      max = is_signed? Value(b, 0x7fffffffffffffffll): Value(b, 0xffffffffffffffffull); 
       break;
-    case utils::thirty_two:
-      max = is_signed? BV32(0x7fffffff): BV32(0xffffffffu); 
+    case thirty_two:
+      max = is_signed? Value(b, 0x7fffffff)          : Value(b, 0xffffffffu); 
       break;
-    case utils::sixteen:
-      max = is_signed? BV16(0x7fff): BV16(0xffffu); 
+    case sixteen:
+      max = is_signed? Value(b, 0x7fff)              : Value(b, 0xffffu); 
       break;
-    case utils::eight:
-      max = is_signed? BV8(0x7f): BV8(0xffu); 
+    case eight:
+      max = is_signed? Value(b, 0x7f)                : Value(b, 0xffu); 
       break;
-    case utils::one:
-      max = BV1(1); 
+    case one:
+      max = Value(b, 1); 
       break;
     }
     return max;
   }
 
-  utils::Value GetMinInt(utils::Bitsize b, bool is_signed) {
-    utils::Value min;
+  Value GetMinInt(Bitsize b, bool is_signed) {
+    Value min;
     switch(b) {
-    case utils::sixty_four:
-      min = is_signed? BV64(0x8000000000000000ll): BV64(0x0000000000000000ull); 
+    case sixty_four:
+      min = is_signed? Value(b, 0x8000000000000000ll): Value(b, 0x0000000000000000ull); 
       break;
-    case utils::thirty_two:
-      min = is_signed? BV32(0x80000000): BV32(0x00000000u); 
+    case thirty_two:
+      min = is_signed? Value(b, 0x80000000)          : Value(b, 0x00000000u); 
       break;
-    case utils::sixteen:
-      min = is_signed? BV16(0x8000): BV16(0x0000u); 
+    case sixteen:
+      min = is_signed? Value(b, 0x8000)              : Value(b, 0x0000u); 
       break;
-    case utils::eight:
-      min = is_signed? BV8(0x80): BV8(0x00u); 
+    case eight:
+      min = is_signed? Value(b, 0x80)                : Value(b, 0x00u); 
       break;
-    case utils::one:
-      min = BV1(0); 
+    case one:
+      min = Value(b, 0); 
       break;
     }
     return min;

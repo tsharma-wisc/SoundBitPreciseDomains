@@ -3,6 +3,7 @@
 
 #include "AbstractValue.hpp"
 #include "utils/timer/timer.hpp"
+#include "utils/debug/DebugOptions.hpp"
 
 // Forward declaration of friend class
 class WrappedDomain_Int;
@@ -209,7 +210,7 @@ public:
 
       Wrap(that_wav_cp->wrapped_voc());
       that_wav_cp->Wrap(wrapped_voc());
-      UWAssert::shouldNeverHappen(this->wrapped_voc() != that_wav_cp->wrapped_voc());
+      assert(this->wrapped_voc() == that_wav_cp->wrapped_voc());
 
       av_->Meet(that_wav_cp->av_);
     }
@@ -228,13 +229,13 @@ public:
     map_0_to_1__1_to_2.insert(std::pair<Version, Version>(1, 2));
 
     ref_ptr<BitpreciseWrappedAbstractValue> _1_2_op2_av = 
-      dynamic_cast<BitpreciseWrappedAbstractValue*>(op2->Copy().get_ptr());
+      static_cast<BitpreciseWrappedAbstractValue*>(op2->Copy().get_ptr());
     _1_2_op2_av->ReplaceVersions(map_0_to_1__1_to_2);
 
     DEBUG_PRINTING(DBG_PRINT_DETAILS, std::cout << "\n_1_2_op2_av:";  _1_2_op2_av->print(std::cout););
 
     ref_ptr<BitpreciseWrappedAbstractValue> _3_voc_this_av = 
-      dynamic_cast<BitpreciseWrappedAbstractValue*>(Copy().get_ptr());
+      static_cast<BitpreciseWrappedAbstractValue*>(Copy().get_ptr());
 
     // Calculate the pre-vocabulary in _1_2_op2_av for which wrapping constraints
     // need to be added to get precision while not sacrificing soundness
@@ -313,7 +314,7 @@ public:
 
   // reduce this with constraints from that
   virtual void Reduce(const AbsValRefPtr& that) {
-    const BitpreciseWrappedAbstractValue * that_wav = dynamic_cast<const BitpreciseWrappedAbstractValue *>(that.get_ptr());
+    const BitpreciseWrappedAbstractValue * that_wav = static_cast<const BitpreciseWrappedAbstractValue *>(that.get_ptr());
     this->Reduce (that_wav->av());
   }
 
@@ -436,7 +437,6 @@ private:
   }
 
   BitpreciseWrappedAbstractValue *downcast( BaseClass &val) const {
-    assert(dynamic_cast<BitpreciseWrappedAbstractValue *>(&val));
     return static_cast<BitpreciseWrappedAbstractValue *>(&val);
   }
 
@@ -445,7 +445,6 @@ private:
   }
 
   const BitpreciseWrappedAbstractValue *downcast( const BaseClass &val) const {
-    assert(dynamic_cast<const BitpreciseWrappedAbstractValue *>(&val));
     return static_cast<const BitpreciseWrappedAbstractValue *>(&val);
   }
 
@@ -526,7 +525,7 @@ private:
     for(;it1 != v1.end(); it1++) {
       VocabularySignedness::const_iterator it2_f = std::find(it2, v2.end(), *it1);
       // Sanity check to ensure that the both vocabulary signedness are sound with respect to each other
-      UWAssert::shouldNeverHappen(it2_f != v2.end() && it1->second != it2_f->second);
+      assert(it2_f == v2.end() || it1->second == it2_f->second);
       result.insert(*it1);
     }
 

@@ -11,10 +11,10 @@ namespace abstract_domain {
   BitpreciseWrappedAbstractValue::GetMinBoundingConstraint(const DimensionKey& k, bool is_signed) {
     mpz_class one_mpz(1);
     mpz_class zero_mpz(0);
-    unsigned b = k.GetNumbits();
+    utils::Bitsize b = k.bitsize;
 
     linexp_type k_le; k_le.insert(linexp_type::value_type(k, one_mpz)); // Creates expr 1.k
-    mpz_class min_mpz = utils::convert_to_mpz(GetMinInt(b, is_signed), is_signed);
+    mpz_class min_mpz = utils::convert_to_mpz(utils::GetMinInt(b, is_signed), is_signed);
 
     // 1.k >= min_mpz
     return std::make_pair(std::make_pair(affexp_type(k_le, zero_mpz), affexp_type(linexp_type(), min_mpz)), GE); 

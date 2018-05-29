@@ -1,4 +1,5 @@
 #include "value.hpp"
+#include <cassert>
 
 namespace utils {
 
@@ -47,11 +48,11 @@ namespace utils {
   {
   }
  
-  Value::Value(const LONG_UINT val)
-    : size_(thirty_two)
-  {
-    bv32_ = (UINT)val;
-  }
+  // Value::Value(const LONG_UINT val)
+  //   : size_(thirty_two)
+  // {
+  //   bv32_ = (UINT)val;
+  // }
 
   Value::Value(const Bitsize size, const LONG_UINT val)
     : size_(size)
@@ -75,27 +76,6 @@ namespace utils {
       }
   }
 
-
-  Value::Value(const BV64 val)
-    : size_(sixty_four), bv64_(val)
-  {}
-
-  Value::Value(const BV32 val)
-    : size_(thirty_two), bv32_(val)
-  {}
-
-  Value::Value(const BV16 val)
-    : size_(sixteen), bv16_(val)
-  {}
-
-  Value::Value(const BV8 val)
-    : size_(eight), bv8_(val)
-  {}
-
-  Value::Value(const BV1 val)
-    : size_(one), bv1_(val)
-  {}
-
   Value::~Value() {}
 
   const Value& Value::operator+() const { return *this; }
@@ -105,15 +85,15 @@ namespace utils {
     switch(size_)
       {
       case sixty_four:
-        return Value(-bv64_);
+        return Value(size_, -bv64_);
       case thirty_two:
-        return Value(-bv32_);
+        return Value(size_, -bv32_);
       case sixteen:
-        return Value(-bv16_);
+        return Value(size_, -bv16_);
       case eight:
-        return Value(-bv8_);
+        return Value(size_, -bv8_);
       case one:
-        return Value(-bv1_);
+        return Value(size_, -bv1_);
       }
     assert(false);
     return *this;
@@ -124,15 +104,15 @@ namespace utils {
     switch(size_)
       {
       case sixty_four:
-        return Value(~bv64_);
+        return Value(size_, ~bv64_);
       case thirty_two:
-        return Value(~bv32_);
+        return Value(size_, ~bv32_);
       case sixteen:
-        return Value(~bv16_);
+        return Value(size_, ~bv16_);
       case eight:
-        return Value(~bv8_);
+        return Value(size_, ~bv8_);
       case one:
-        return Value(~bv1_);
+        return Value(size_, ~bv1_);
       }
     assert(false);
     return *this;
@@ -143,15 +123,15 @@ namespace utils {
     switch(size_)
       {
       case sixty_four:
-        return (bv64_ == BV64(0));
+        return (bv64_ == 0);
       case thirty_two:
-        return (bv32_ == BV32(0));
+        return (bv32_ == 0);
       case sixteen:
-        return (bv16_ == BV16(0));
+        return (bv16_ == 0);
       case eight:
-        return (bv8_ == BV8(0));
+        return (bv8_ == 0);
       case one:
-        return (bv1_ == BV1(0));
+        return (bv1_ == 0);
       }
     assert(false);
     return false;
@@ -159,19 +139,19 @@ namespace utils {
 
   const Value Value::operator+(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_+v.bv64_);
+        return Value(size_, bv64_+v.bv64_);
       case thirty_two:
-        return Value(bv32_+v.bv32_);
+        return Value(size_, bv32_+v.bv32_);
       case sixteen:
-        return Value(bv16_+v.bv16_);
+        return Value(size_, bv16_+v.bv16_);
       case eight:
-        return Value(bv8_+v.bv8_);
+        return Value(size_, bv8_+v.bv8_);
       case one:
-        return Value(bv1_+v.bv1_);
+        return Value(size_, bv1_+v.bv1_);
       }
     assert(false);
     return v;
@@ -179,19 +159,19 @@ namespace utils {
 
   const Value Value::operator-(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_-v.bv64_);
+        return Value(size_, bv64_-v.bv64_);
       case thirty_two:
-        return Value(bv32_-v.bv32_);
+        return Value(size_, bv32_-v.bv32_);
       case sixteen:
-        return Value(bv16_-v.bv16_);
+        return Value(size_, bv16_-v.bv16_);
       case eight:
-        return Value(bv8_-v.bv8_);
+        return Value(size_, bv8_-v.bv8_);
       case one:
-        return Value(bv1_-v.bv1_);
+        return Value(size_, bv1_-v.bv1_);
       }
     assert(false);
     return v;
@@ -199,19 +179,19 @@ namespace utils {
 
   const Value Value::operator*(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_*v.bv64_);
+        return Value(size_, bv64_*v.bv64_);
       case thirty_two:
-        return Value(bv32_*v.bv32_);
+        return Value(size_, bv32_*v.bv32_);
       case sixteen:
-        return Value(bv16_*v.bv16_);
+        return Value(size_, bv16_*v.bv16_);
       case eight:
-        return Value(bv8_*v.bv8_);
+        return Value(size_, bv8_*v.bv8_);
       case one:
-        return Value(bv1_*v.bv1_);
+        return Value(size_, bv1_*v.bv1_);
       }
     assert(false);
     return v;
@@ -219,19 +199,19 @@ namespace utils {
 
   const Value Value::operator%(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_%v.bv64_);
+        return Value(size_, bv64_%v.bv64_);
       case thirty_two:
-        return Value(bv32_%v.bv32_);
+        return Value(size_, bv32_%v.bv32_);
       case sixteen:
-        return Value(bv16_%v.bv16_);
+        return Value(size_, bv16_%v.bv16_);
       case eight:
-        return Value(bv8_%v.bv8_);
+        return Value(size_, bv8_%v.bv8_);
       case one:
-        return Value(bv1_%v.bv1_);
+        return Value(size_, bv1_%v.bv1_);
       }
     assert(false);
     return v;
@@ -239,34 +219,34 @@ namespace utils {
 
   // Signed modulo operation which interprets this and v as signed
   const Value Value::smod(const Value& v) const { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_) {
     case sixty_four: {
       LONG_INT num = bv64_;
       LONG_INT den = v.bv64_;
       LONG_INT smod = num%den;
-      return Value(BV64(LONG_UINT(smod)));
+      return Value(size_, LONG_UINT(smod));
     }
     case thirty_two: {
       INT num = bv32_;
       INT den = v.bv32_;
       INT smod = num%den;
-      return Value(BV32(UINT(smod)));
+      return Value(size_, UINT(smod));
     }
     case sixteen: {
       SHORT num = bv16_;
       SHORT den = v.bv16_;
       SHORT smod = num%den;
-      return Value(BV16(USHORT(smod)));
+      return Value(size_, USHORT(smod));
     }
     case eight: {
       CHAR num = bv16_;
       CHAR den = v.bv16_;
       CHAR smod = num%den;
-      return Value(BV8(UCHAR(smod)));
+      return Value(size_, UCHAR(smod));
     }
     case one:
-      return Value(bv1_%v.bv1_);
+      return Value(size_, bv1_%v.bv1_);
     }
     assert(false);
     return v;
@@ -274,19 +254,19 @@ namespace utils {
 
   const Value Value::operator/(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_/v.bv64_);
+        return Value(size_, bv64_/v.bv64_);
       case thirty_two:
-        return Value(bv32_/v.bv32_);
+        return Value(size_, bv32_/v.bv32_);
       case sixteen:
-        return Value(bv16_/v.bv16_);
+        return Value(size_, bv16_/v.bv16_);
       case eight:
-        return Value(bv8_/v.bv8_);
+        return Value(size_, bv8_/v.bv8_);
       case one:
-        return Value(bv1_/v.bv1_);
+        return Value(size_, bv1_/v.bv1_);
       }
     assert(false);
     return v;
@@ -295,35 +275,35 @@ namespace utils {
   // Signed division operation which interprets this and v as signed
   const Value Value::sdiv(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four: {
         LONG_INT num = bv64_;
         LONG_INT den = v.bv64_;
         LONG_INT sdiv = num/den;
-        return Value(BV64(LONG_UINT(sdiv)));
+        return Value(size_, LONG_UINT(sdiv));
       }
       case thirty_two: {
         INT num = bv32_;
         INT den = v.bv32_;
         INT sdiv = num/den;
-        return Value(BV32(UINT(sdiv)));
+        return Value(size_, UINT(sdiv));
       }
       case sixteen: {
         SHORT num = bv16_;
         SHORT den = v.bv16_;
         SHORT sdiv = num/den;
-        return Value(BV16(USHORT(sdiv)));
+        return Value(size_, USHORT(sdiv));
       }
       case eight: {
         CHAR num = bv16_;
         CHAR den = v.bv16_;
         CHAR sdiv = num/den;
-        return Value(BV8(UCHAR(sdiv)));
+        return Value(size_, UCHAR(sdiv));
       }
       case one:
-        return Value(bv1_/v.bv1_);
+        return Value(size_, bv1_/v.bv1_);
       }
     assert(false);
     return v;
@@ -331,19 +311,19 @@ namespace utils {
 
   const Value Value::operator&(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_&v.bv64_);
+        return Value(size_, bv64_&v.bv64_);
       case thirty_two:
-        return Value(bv32_&v.bv32_);
+        return Value(size_, bv32_&v.bv32_);
       case sixteen:
-        return Value(bv16_&v.bv16_);
+        return Value(size_, bv16_&v.bv16_);
       case eight:
-        return Value(bv8_&v.bv8_);
+        return Value(size_, bv8_&v.bv8_);
       case one:
-        return Value(bv1_&v.bv1_);
+        return Value(size_, bv1_&v.bv1_);
       }
     assert(false);
     return v;
@@ -351,19 +331,19 @@ namespace utils {
 
   const Value Value::operator|(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_|v.bv64_);
+        return Value(size_, bv64_|v.bv64_);
       case thirty_two:
-        return Value(bv32_|v.bv32_);
+        return Value(size_, bv32_|v.bv32_);
       case sixteen:
-        return Value(bv16_|v.bv16_);
+        return Value(size_, bv16_|v.bv16_);
       case eight:
-        return Value(bv8_|v.bv8_);
+        return Value(size_, bv8_|v.bv8_);
       case one:
-        return Value(bv1_|v.bv1_);
+        return Value(size_, bv1_|v.bv1_);
       }
     assert(false);
     return v;
@@ -371,19 +351,19 @@ namespace utils {
 
   const Value Value::operator^(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_^v.bv64_);
+        return Value(size_, bv64_^v.bv64_);
       case thirty_two:
-        return Value(bv32_^v.bv32_);
+        return Value(size_, bv32_^v.bv32_);
       case sixteen:
-        return Value(bv16_^v.bv16_);
+        return Value(size_, bv16_^v.bv16_);
       case eight:
-        return Value(bv8_^v.bv8_);
+        return Value(size_, bv8_^v.bv8_);
       case one:
-        return Value(bv1_^v.bv1_);
+        return Value(size_, bv1_^v.bv1_);
       }
     assert(false);
     return v;
@@ -391,22 +371,22 @@ namespace utils {
 
   const Value Value::operator>>(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_>>v.bv64_);
+        return Value(size_, bv64_>>v.bv64_);
       case thirty_two:
-        return Value(bv32_>>v.bv32_);
+        return Value(size_, bv32_>>v.bv32_);
       case sixteen:
-        return Value(bv16_>>v.bv16_);
+        return Value(size_, bv16_>>v.bv16_);
       case eight:
-        return Value(bv8_>>v.bv8_);
+        return Value(size_, bv8_>>v.bv8_);
       case one:
-        if(v.bv1_== BV1(true)) 
-          return Value(BV1(false));
+        if(v.bv1_== 1)
+          return Value(size_, 0);
         else 
-          return Value(bv1_);
+          return Value(size_, bv1_);
       }
     assert(false);
     return v;
@@ -414,22 +394,22 @@ namespace utils {
 
   const Value Value::operator<<(const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
-        return Value(bv64_<<v.bv64_);
+        return Value(size_, bv64_<<v.bv64_);
       case thirty_two:
-        return Value(bv32_<<v.bv32_);
+        return Value(size_, bv32_<<v.bv32_);
       case sixteen:
-        return Value(bv16_<<v.bv16_);
+        return Value(size_, bv16_<<v.bv16_);
       case eight:
-        return Value(bv8_<<v.bv8_);
+        return Value(size_, bv8_<<v.bv8_);
       case one:
-        if(v.bv1_== BV1(true)) 
-          return Value(BV1(false));
+        if(v.bv1_== 1) 
+          return Value(size_, 0);
         else 
-          return Value(bv1_);
+          return Value(size_, bv1_);
       }
     assert(false);
     return v;
@@ -437,7 +417,7 @@ namespace utils {
 
   bool Value::operator< (const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
@@ -458,7 +438,7 @@ namespace utils {
 
   bool Value::operator> (const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
@@ -479,7 +459,7 @@ namespace utils {
 
   bool Value::operator<= (const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
@@ -500,7 +480,7 @@ namespace utils {
 
   bool Value::operator>= (const Value& v) const 
   { 
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
@@ -521,7 +501,7 @@ namespace utils {
 
   bool Value::operator== (const Value& v) const
   {
-    UWAssert::shouldNeverHappen(size_ != v.size_);
+    assert(size_ == v.size_);
     switch(size_)
       {
       case sixty_four:
@@ -562,7 +542,7 @@ namespace utils {
   {
     LONG_UINT new_bitwidth = utils::GetBitWidth(new_bitsize);
     LONG_UINT old_bitwidth = utils::GetBitWidth(size_);
-    UWAssert::shouldNeverHappen(old_bitwidth > new_bitwidth);
+    assert(old_bitwidth <= new_bitwidth);
     switch(size_)
       {
       case sixty_four:
@@ -586,7 +566,7 @@ namespace utils {
   {
     LONG_UINT new_bitwidth = utils::GetBitWidth(new_bitsize);
     LONG_UINT old_bitwidth = utils::GetBitWidth(size_);
-    UWAssert::shouldNeverHappen(old_bitwidth > new_bitwidth);
+    assert(old_bitwidth <= new_bitwidth);
     switch(size_)
       {
       case sixty_four:
@@ -610,7 +590,7 @@ namespace utils {
   {
     LONG_UINT new_bitwidth = utils::GetBitWidth(new_bitsize);
     LONG_UINT old_bitwidth = utils::GetBitWidth(size_);
-    UWAssert::shouldNeverHappen(old_bitwidth < new_bitwidth);
+    assert(old_bitwidth >= new_bitwidth);
     switch(size_)
       {
       case sixty_four:
@@ -648,6 +628,35 @@ namespace utils {
     return size_;
   }
 
+
+
+  template <typename T>
+  size_t highest_power()
+  { return sizeof(T) * 8; }
+
+  //
+  // compute_rank
+  //
+  // Version of Fig. 5-14 from Hacker's Delight that uses a loop
+  // so that it can be parameterized on highest_power
+  template <typename T>
+  inline size_t compute_rank(T x) {
+    T y;
+    size_t n;
+
+    if (x == T(0)) return highest_power<T>();
+
+    n = highest_power<T>() - 1;
+    for (size_t shift = highest_power<T>()/2; shift != 0; shift /= 2) {
+      y = x << shift;
+      if (! (y == T(0)) ) {
+        n = n - shift;
+        x = y;
+      }
+    }
+    return n;
+  }
+
   size_t compute_value_rank(Value v) 
   {
     switch(v.size_)
@@ -667,23 +676,47 @@ namespace utils {
     return 0;
   }
 
+
+  // find the multiplicative inverse
+  template <typename T>
+  T multiplicative_inverse(T d) {
+    T xn ,t;
+    if(d % 2 != 1)
+      assert(false);
+
+    xn = d;
+    while(true) {
+      t = d*xn;
+      if(t == 1) return xn;
+      xn = xn*((T)2-t);
+    }
+  }
+    
+  // A template specialization of multiplicative_inverse for BV1
+  //
+  template <>
+  inline UINT1 multiplicative_inverse(UINT1 d) {
+    if(d != 1)
+      assert(false);
+    return d;
+  }
+
   Value multiplicative_inverse_value(Value v)
   {
-    switch(v.size_)
-      {
+    switch(v.size_) {
       case sixty_four:
-        return multiplicative_inverse(v.bv64_);
+        return Value(v.size_, multiplicative_inverse(v.bv64_));
       case thirty_two:
-        return multiplicative_inverse(v.bv32_);
+        return Value(v.size_, multiplicative_inverse(v.bv32_));
       case sixteen:
-        return multiplicative_inverse(v.bv16_);
+        return Value(v.size_, multiplicative_inverse(v.bv16_));
       case eight:
-        return multiplicative_inverse(v.bv8_);
+        return Value(v.size_, multiplicative_inverse(v.bv8_));
       case one:
-        return multiplicative_inverse(v.bv1_);
+        return Value(v.size_, multiplicative_inverse(v.bv1_));
       }
     assert(false);
-    return BV32(0);
+    return Value(thirty_two, 0);
   }
 
   std::ostream& operator<<(std::ostream& o, const Value v)
@@ -708,20 +741,77 @@ namespace utils {
     return o;
   }
 
+
+  // Function to calculate population count
+  template <typename T>
+  size_t pop_count(T a) { assert(false); return 0; }
+
+  // Specializations of pop_count operations
+  template <>
+  inline size_t pop_count(LONG_UINT data) {
+    LONG_UINT p = data;
+    p = (p & 0x5555555555555555ULL) + ((p >> 1) & 0x5555555555555555ULL);
+    p = (p & 0x3333333333333333ULL) + ((p >> 2) & 0x3333333333333333ULL);
+    p = (p & 0x0F0F0F0F0F0F0F0FULL) + ((p >> 4) & 0x0F0F0F0F0F0F0F0FULL);
+    p = (p & 0x00FF00FF00FF00FFULL) + ((p >> 8) & 0x00FF00FF00FF00FFULL);
+    p = (p & 0x0000FFFF0000FFFFULL) + ((p >>16) & 0x0000FFFF0000FFFFULL);
+    p = (p & 0x00000000FFFFFFFFULL) + ((p >>32) & 0x00000000FFFFFFFFULL);
+    return (size_t)p;
+  }
+
+  template <>
+  inline size_t pop_count(UINT data) {
+    UINT p = data;
+    p = (p & 0x55555555) + ((p >> 1) & 0x55555555);
+    p = (p & 0x33333333) + ((p >> 2) & 0x33333333);
+    p = (p & 0x0F0F0F0F) + ((p >> 4) & 0x0F0F0F0F);
+    p = (p & 0x00FF00FF) + ((p >> 8) & 0x00FF00FF);
+    p = (p & 0x0000FFFF) + ((p >>16) & 0x0000FFFF);
+    return (size_t)p;
+  }
+
+  template <>
+  inline size_t pop_count(USHORT data) {
+    USHORT p = data;
+    p = (p & 0x5555) + ((p >> 1) & 0x5555);
+    p = (p & 0x3333) + ((p >> 2) & 0x3333);
+    p = (p & 0x0F0F) + ((p >> 4) & 0x0F0F);
+    p = (p & 0x00FF) + ((p >> 8) & 0x00FF);
+    return (size_t)p;
+  }
+
+  template <>
+  inline size_t pop_count(UCHAR data) {
+    UCHAR p = data;
+    p = (p & 0x55) + ((p >> 1) & 0x55);
+    p = (p & 0x33) + ((p >> 2) & 0x33);
+    p = (p & 0x0F) + ((p >> 4) & 0x0F);
+    return (size_t)p;
+  }
+
+  // Return the min pop count of val and -val. This is useful to figure out how 
+  // complex the mutiplication with val would be
+  template <typename T>
+  size_t GetMinPosOrNegPopCount(T val)
+  {
+    T minus_val = -val;
+    return (std::min) (pop_count(val), pop_count(minus_val)); 
+  }
+
   size_t GetMinPosOrNegPopCount(Value v) 
   {
     switch(v.size_)
       {
       case sixty_four:
-        return GetMinPosOrNegPopCount<BV64>(v.bv64_);
+        return GetMinPosOrNegPopCount(v.bv64_);
       case thirty_two:
-        return GetMinPosOrNegPopCount<BV32>(v.bv32_);
+        return GetMinPosOrNegPopCount(v.bv32_);
       case sixteen:
-        return GetMinPosOrNegPopCount<BV16>(v.bv16_);
+        return GetMinPosOrNegPopCount(v.bv16_);
       case eight:
-        return GetMinPosOrNegPopCount<BV8>(v.bv8_);
+        return GetMinPosOrNegPopCount(v.bv8_);
       case one:
-        return GetMinPosOrNegPopCount<BV1>(v.bv1_);
+        return GetMinPosOrNegPopCount(v.bv1_);
       }
     assert(false);
     return 0;

@@ -33,18 +33,26 @@ These steps will install all the external dependencies to the $(SBD_DIR)/externa
    - This packages is optional and used only for the unittests.
 
 5) boost:  tar -xvf boost_1_61_0.tar.bz2
+
+6) WALi:
+   1) In the external folder, git clone https://github.com/WaliDev/WALi-OpenNWA.git
+   2) scons (Note that you need to install scons)
+
 ----------------------------------------------------------------------------------------------------------------
 
 Building components:
-1) AbstractDomain: TODO
+1) AbstractDomain: 
+   a) common: cd src/AbstractDomain/common && make
 2) Analysis: TODO
 
 ----------------------------------------------------------------------------------------------------------------
 
 Running unit tests:
 1) CommonUnitTests:
-    (i) cd src/AbstractDomain/common/unittests
-    (ii) LD_LIBRARY_PATH=../../../external/lib CommonUnitTests
+    (a) cd src/AbstractDomain/common/unittests
+    (b) make
+    (c) Running tests might need the LD_LIBRARY_PATH variable to be set:
+        LD_LIBRARY_PATH="$(SBD_DIR)/external/lib;$(SBD_DIR)/external/WALi-OpenNWA/lib64" CommonUnitTests
 
 ....INCOMPLETE (TODO)....
 

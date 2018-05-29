@@ -2,7 +2,7 @@
 #define src_AbstractDomain_common_AvSemiring_hpp
 
 #include <map>
-#include "external/wali/SemElem.hpp"
+#include "wali/SemElem.hpp"
 #include "AbstractValue.hpp"
 using wali::SemElem;
 using wali::sem_elem_t;

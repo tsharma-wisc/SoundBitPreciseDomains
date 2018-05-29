@@ -1,7 +1,6 @@
 #ifndef utils_gmp_gmpxx_utils_hpp
 #define utils_gmp_gmpxx_utils_hpp
 #include "gmpxx.h"
-#endif
 #include "value.hpp"
 
 namespace utils {
