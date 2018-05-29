@@ -1,0 +1,65 @@
+README to install and run SoundBitPreciseDomains project.
+First git clone this repository. Let the top folder be SoundBitPreciseDomains be $(SBD_DIR):
+---------------------------------------External Dependencies----------------------------------------------------
+These steps will install all the external dependencies to the $(SBD_DIR)/external folder:
+1) LLVM: This project works with llvm 3.5.1. Install llvm 3.5.1 as follows:
+   1) tar -xvf llvm-3.5.1.src.tar.xz && mv llvm-3.5.1.src llvm
+   2) tar -xvf cfe-3.5.1.src.tar.xz && mv cfe-3.5.1.src.tar.xz clang
+   2) mv clang llvm/tools
+   3) mkdir build && cd build
+   4) ../llvm/configure --prefix=$(SBD_DIR)/external
+   5) Finally, make ENABLE_RTTI=1 -j <num_cpus>; make install
+      (Building with RTTI is crucial to run SBD project as it heavily uses dynamic casts.)
+   
+2) Z3:
+   1) unzip z3.zip && cd z3-master
+   2) python scripts/mk_make.py --prefix=$(SBD_DIR)/external
+   cd build; make; make install
+
+3) GMP: 
+   1) tar -xvf gmp-6.1.1.tar.bz2
+   2) cd gmp-6.1.1
+   3) ./configure --prefix=$(SBD_DIR)/external --enable-cxx
+   4) make; make check; make install
+
+4) PPL:
+   1) unzip ppl-1.2.zip && cd ppl-1.2
+   1) ./configure --with-gmp=$(SBD_DIR)/external --prefix=$(SBD_DIR)/external
+   2) make; make install
+
+4) Googletest: 
+   1) unzip googletest-master.zip && cd googletest-master
+   2) cd googletest/googletest/make && make
+   - This packages is optional and used only for the unittests.
+
+5) boost:  tar -xvf boost_1_61_0.tar.bz2
+----------------------------------------------------------------------------------------------------------------
+
+Building components:
+1) AbstractDomain: TODO
+2) Analysis: TODO
+
+----------------------------------------------------------------------------------------------------------------
+
+Running unit tests:
+1) CommonUnitTests:
+    (i) cd src/AbstractDomain/common/unittests
+    (ii) LD_LIBRARY_PATH=../../../external/lib CommonUnitTests
+
+....INCOMPLETE (TODO)....
+
+----------------------------------------------------------------------------------------------------------------
+
+Debugging concerns:
+ (1) When trying to build a project on linux, if you run into GLIB issue or linking issues with ppl:
+     /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.10' not found
+     it suggests an issue with LD_LIBRARY_PATH. Try,
+     export LD_LIBRARY_PATH=/s/gcc-4.8./lib64:$LD_LIBRARY_PATH
+ (2) If building unit tests or components fails such that error is in PPL code in external/include/ppl* header
+     files, then try changing external/ppl-1.2/ppl-config.h by commenting "#define PPL_HAVE_TYPEOF 1" and perform
+     make; make install for PPL again. 
+     (This is a non-compatibility issue of PPL with typeof. 
+      This is more likely be an issue with code that is built with c++0x and uses PPL.)
+
+
+For any other question, contact Tushar (tsharma@cs.wisc.edu)
