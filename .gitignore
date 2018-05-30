@@ -1,0 +1,17 @@
+*.o
+*.so
+*~
+*.a
+external/bin
+external/lib
+external/include
+external/build
+external/share
+external/docs
+external/llvm
+external/ppl-1.2
+external/boost_1_61_0
+external/gmp-6.1.1
+external/WALi-OpenNWA
+external/z3-master
+external/googletest-master

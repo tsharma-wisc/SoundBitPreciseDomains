@@ -58,7 +58,6 @@ namespace abstract_domain
     // Comparison operations
     bool operator==  (const AbstractValue& that) const;
     bool operator== (const PointsetPowersetAv&that) const;
-    inline bool operator!= (const PointsetPowersetAv&that) const;
     bool Overapproximates(const ref_ptr<AbstractValue>&) const;
 
     // Abstract Domain operations

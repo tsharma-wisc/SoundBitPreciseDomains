@@ -46,9 +46,9 @@ namespace llvm_abstract_transformer {
   public:
     friend class ::llvm_abstract_transformer::WrappedDomainWPDSCreator;
 
-    typedef std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, 
-                      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > BoolVal_T;
-    typedef std::map<llvm::Value*, DimensionKey> value_to_dim_t;
+    typedef std::pair<wali::ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue>,
+                      wali::ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue> > BoolVal_T;
+    typedef std::map<llvm::Value*, abstract_domain::DimensionKey> value_to_dim_t;
 
   private:
     // Data members shared among all BBs
@@ -66,12 +66,12 @@ namespace llvm_abstract_transformer {
     // correct bit-precise wrapped representation of bool values and abstract transformers 
     // (for example, it can be pointset-powerset of polyhedra)
     // It is initialized for each BB to talk about its from vocabulary
-    ref_ptr<abstract_value::AbstractValue> av_prevoc_;
+    ref_ptr<abstract_domain::AbstractValue> av_prevoc_;
 
-    // A map from Value* (which is a alloca instruction to <DimensionKey, unsigned> pair
+    // A map from Value* (which is a alloca instruction to <abstract_domain::DimensionKey, unsigned> pair
     // The first part of the pair is the key to a symbolic value)
     // This global variable is set by CreateVocabularyForFunction
-    std::map<llvm::Value*, std::pair<DimensionKey, unsigned> > alloca_map_;
+    std::map<llvm::Value*, std::pair<abstract_domain::DimensionKey, unsigned> > alloca_map_;
 
     // A map from Value* to a corresponding dimension key
     value_to_dim_t instr_value_to_dim_;
@@ -83,19 +83,19 @@ namespace llvm_abstract_transformer {
 
     // Starts with one at the constructor and modifies it according to the instructions in
     // BasicBlock
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> state_;
+    ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue> state_;
 
     bool add_array_bounds_check_;
   public:
     // av is used to create initial state
-    explicit WrappedDomainBBAbsTransCreator(std::unique_ptr<llvm::Module> M, ref_ptr<abstract_value::AbstractValue> av, bool add_array_bounds_check);
+    explicit WrappedDomainBBAbsTransCreator(std::unique_ptr<llvm::Module> M, ref_ptr<abstract_domain::AbstractValue> av, bool add_array_bounds_check);
     ~WrappedDomainBBAbsTransCreator();
 
     llvm::Module* getModule();
-    ref_ptr<abstract_value::AbstractValue> GetState();
-    ref_ptr<abstract_value::AbstractValue> GetPreVocAv();
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> GetBitpreciseWrappedState(ref_ptr<abstract_value::AbstractValue> st) const;
-    void SetState(ref_ptr<abstract_value::AbstractValue> st);
+    ref_ptr<abstract_domain::AbstractValue> GetState();
+    ref_ptr<abstract_domain::AbstractValue> GetPreVocAv();
+    ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue> GetBitpreciseWrappedState(ref_ptr<abstract_domain::AbstractValue> st) const;
+    void SetState(ref_ptr<abstract_domain::AbstractValue> st);
     void SetSucc(llvm::BasicBlock* succ);
 
     const llvm::DataLayout& getDataLayout() const {return TD;}
@@ -109,19 +109,19 @@ namespace llvm_abstract_transformer {
     (llvm::BasicBlock* bb, 
      llvm::BasicBlock::iterator start,
      llvm::BasicBlock::iterator end,
-     const std::map<llvm::Instruction *, Vocabulary>& insLiveBeforeMap,
-     const std::map<llvm::Instruction *, Vocabulary>& insLiveAfterMap,
-     const Vocabulary& pre_voc, 
-     const Vocabulary& post_voc, 
-     const std::map<llvm::Value*, std::pair<DimensionKey, unsigned> >& alloca_map, 
+     const std::map<llvm::Instruction *, abstract_domain::Vocabulary>& insLiveBeforeMap,
+     const std::map<llvm::Instruction *, abstract_domain::Vocabulary>& insLiveAfterMap,
+     const abstract_domain::Vocabulary& pre_voc,
+     const abstract_domain::Vocabulary& post_voc,
+     const std::map<llvm::Value*, std::pair<abstract_domain::DimensionKey, unsigned> >& alloca_map,
      const value_to_dim_t& instr_value_to_dim,
      bool initialize_state);
 
     void abstractExecuteInst
     (llvm::Instruction& I, 
-     const std::map<llvm::Instruction *, Vocabulary>& insLiveBeforeMap, 
-     const std::map<llvm::Instruction *, Vocabulary>& insLiveAfterMap, 
-     const Vocabulary& pre_post_voc);
+     const std::map<llvm::Instruction *, abstract_domain::Vocabulary>& insLiveBeforeMap,
+     const std::map<llvm::Instruction *, abstract_domain::Vocabulary>& insLiveAfterMap,
+     const abstract_domain::Vocabulary& pre_post_voc);
 
     // Opcode Implementations
     // All of these instructions should be the end of this BasicBlock as they have multiple
@@ -242,9 +242,9 @@ namespace llvm_abstract_transformer {
     (llvm::BasicBlock* bb, 
      llvm::BasicBlock::iterator start,
      llvm::BasicBlock::iterator end,
-     const Vocabulary& pre_voc, 
-     const Vocabulary& post_voc, 
-     const std::map<llvm::Value*, std::pair<DimensionKey, unsigned> >& alloca_map, 
+     const abstract_domain::Vocabulary& pre_voc,
+     const abstract_domain::Vocabulary& post_voc,
+     const std::map<llvm::Value*, std::pair<abstract_domain::DimensionKey, unsigned> >& alloca_map, 
      const value_to_dim_t& instr_value_to_dim,
      bool initialize_state);
 
@@ -272,7 +272,7 @@ private:  // Helper functions
     WrappedDomain_Int abstractExecuteIntToPtr(llvm::Value *SrcVal, llvm::Type *DstTy) const;
     WrappedDomain_Int abstractExecuteBitCast(llvm::Value *SrcVal, llvm::Type *DstTy) const;
     WrappedDomain_Int abstractExecuteCastOperation(llvm::Instruction::CastOps opcode, llvm::Value *SrcVal, llvm::Type *Ty) const;
-    WrappedDomain_Int abstractExecuteSelect(std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > Src1, WrappedDomain_Int Src2, WrappedDomain_Int Src3, const llvm::Type *Ty) const;
+    WrappedDomain_Int abstractExecuteSelect(std::pair<ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue> > Src1, WrappedDomain_Int Src2, WrappedDomain_Int Src3, const llvm::Type *Ty) const;
     WrappedDomain_Int abstractExecuteSelect(WrappedDomain_Int Src1, WrappedDomain_Int Src2, WrappedDomain_Int Src3, const llvm::Type *Ty) const;
 
 
@@ -284,24 +284,18 @@ private:  // Helper functions
 
 
     void SetValue(llvm::Value* v, const WrappedDomain_Int& val);
-    void SetDimensionInState(DimensionKey k, const WrappedDomain_Int& IntVal);
+    void SetDimensionInState(abstract_domain::DimensionKey k, const WrappedDomain_Int& IntVal);
 
     WrappedDomain_Int GetValue(llvm::Value* v) const;
 
     // Perform meet of state with val (val might have wrapped vocabulary, 
     // so this function tries to preserv precision by soundly adding 
     // BoundingConstraints on Meet if it can
-    void Meet(const ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>& val);
+    void Meet(const ref_ptr<abstract_domain::BitpreciseWrappedAbstractValue>& val);
 
     BoolVal_T GetBoolValue(llvm::Value* Cond, bool& found) const;
     void SetBoolValue(llvm::Value* Cond, BoolVal_T& val) const;
     WrappedDomain_Int GetBoolValueAsBitsize(BoolVal_T& bool_val, utils::Bitsize bitsize) const;
-
-    bool LoadIntFromMemory(CommonConcRTG::QFBVTerm32RefPtr Src, unsigned LoadBytes, DimensionKey& k) const;
-    WrappedDomain_Int LoadValueFromMemory(CommonConcRTG::QFBVTerm32RefPtr Ptr, llvm::Type *Ty) const;
-
-    void StoreIntToMemory(const WrappedDomain_Int& IntVal, CommonConcRTG::QFBVTerm32RefPtr Dest, unsigned StoreBytes);
-    void StoreValueToMemory(const WrappedDomain_Int& Val, CommonConcRTG::QFBVTerm32RefPtr Ptr, llvm::Type *Ty);
 
     WrappedDomain_Int GetAbstractIntFromLLVMConstant(const llvm::Constant *C);
     WrappedDomain_Int GetAbstractIntFromAPInt(const llvm::APInt C) const;

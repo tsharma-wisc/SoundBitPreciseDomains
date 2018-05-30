@@ -16,7 +16,7 @@
 #include "utils/timer/timer.hpp"
 
 using namespace llvm;
-using namespace abstract_value;
+using namespace abstract_domain;
 using namespace llvm_abstract_transformer;
 
 extern const char* cmdlineparam__filename;
@@ -82,7 +82,7 @@ char CollectLoopInfo::ID = 0;
 static RegisterPass<CollectLoopInfo> ref_collect_loop_info("CollectLoopInfo", "Collects information on Loop", true, true);
 }
 
-WrappedDomainWPDSCreator::WrappedDomainWPDSCreator(std::unique_ptr<Module> M, ref_ptr<abstract_value::AbstractValue> av, std::string& filename, bool add_array_bounds_check) : bb_abs_trans_cr_(std::move(M), av, add_array_bounds_check), av_(av->Top()), filename_(filename), add_array_bounds_check_(add_array_bounds_check) {
+WrappedDomainWPDSCreator::WrappedDomainWPDSCreator(std::unique_ptr<Module> M, ref_ptr<AbstractValue> av, std::string& filename, bool add_array_bounds_check) : bb_abs_trans_cr_(std::move(M), av, add_array_bounds_check), av_(av->Top()), filename_(filename), add_array_bounds_check_(add_array_bounds_check) {
   // State keys
   program_ = wali::getKey("program");
   min_max_voc_size = std::make_pair(100000u, 0u);
@@ -183,8 +183,8 @@ BasicBlock::iterator WrappedDomainWPDSCreator::findNonModelCall(BasicBlock* bb, 
   BasicBlock::iterator end = bb->end();
   while(start != end) {
     Instruction* I = start;
-    CallInst* c = dynamic_cast<CallInst*>(I);
-    if(c != NULL) {
+    if(CallInst::classof(I)) {
+      CallInst* c = static_cast<CallInst*>(I);
       CallSite cs(c);
       if(!isModel(cs.getCalledFunction())) {
         ci = c;
@@ -204,8 +204,8 @@ bool containsCallToTrap(BasicBlock* bb) {
   BasicBlock::iterator end = bb->end();
   while(start != end) {
     Instruction* I = start;
-    CallInst* c = dynamic_cast<CallInst*>(I);
-    if(c != NULL) {
+    if(CallInst::classof(I)) {
+      CallInst* c = static_cast<CallInst*>(I);
       CallSite cs(c);
       Function* cf = cs.getCalledFunction();
       if(cf && cf->getName() == "llvm.trap")
@@ -231,9 +231,9 @@ void WrappedDomainWPDSCreator::performMem2Reg() {
   std::cout << "......................................";
 }
 
-void WrappedDomainWPDSCreator::AddRuleToPds(ref_ptr<abstract_value::AbstractValue> state_cp, wali::Key from_key, wali::Key to_key, WideningType wty, Vocabulary& voc) {
+void WrappedDomainWPDSCreator::AddRuleToPds(ref_ptr<AbstractValue> state_cp, wali::Key from_key, wali::Key to_key, WideningType wty, Vocabulary& voc) {
   // bb_abs_trans_cr_.Reduce(state_cp);
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> state_cp_bpw = 
+  ref_ptr<BitpreciseWrappedAbstractValue> state_cp_bpw =
     bb_abs_trans_cr_.GetBitpreciseWrappedState(state_cp);
   state_cp_bpw->Project(voc);
   ref_ptr<AvSemiring> w = 
@@ -246,9 +246,9 @@ void WrappedDomainWPDSCreator::AddRuleToPds(ref_ptr<abstract_value::AbstractValu
   UpdateMinMaxVocabularySize(voc.size());
 }
 
-void WrappedDomainWPDSCreator::AddDelta0RuleToPds(ref_ptr<abstract_value::AbstractValue> state_cp, wali::Key from_key, WideningType wty, Vocabulary& voc) {
+void WrappedDomainWPDSCreator::AddDelta0RuleToPds(ref_ptr<AbstractValue> state_cp, wali::Key from_key, WideningType wty, Vocabulary& voc) {
   // bb_abs_trans_cr_.Reduce(state_cp);
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> state_cp_bpw = 
+  ref_ptr<BitpreciseWrappedAbstractValue> state_cp_bpw =
     bb_abs_trans_cr_.GetBitpreciseWrappedState(state_cp);
   state_cp_bpw->Project(voc);
   ref_ptr<AvSemiring> w = 
@@ -261,9 +261,9 @@ void WrappedDomainWPDSCreator::AddDelta0RuleToPds(ref_ptr<abstract_value::Abstra
   UpdateMinMaxVocabularySize(voc.size());
 }
 
-void WrappedDomainWPDSCreator::AddDelta2RuleToPds(ref_ptr<abstract_value::AbstractValue> state_cp, wali::Key from_key, wali::Key callee_entry_key, wali::Key to_key, WideningType wty, Vocabulary& voc, wali::IMergeFn* cf) {
+void WrappedDomainWPDSCreator::AddDelta2RuleToPds(ref_ptr<AbstractValue> state_cp, wali::Key from_key, wali::Key callee_entry_key, wali::Key to_key, WideningType wty, Vocabulary& voc, wali::IMergeFn* cf) {
   // bb_abs_trans_cr_.Reduce(state_cp);
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> state_cp_bpw = 
+  ref_ptr<BitpreciseWrappedAbstractValue> state_cp_bpw =
     bb_abs_trans_cr_.GetBitpreciseWrappedState(state_cp);
   state_cp_bpw->Project(voc);
 
@@ -274,12 +274,12 @@ void WrappedDomainWPDSCreator::AddDelta2RuleToPds(ref_ptr<abstract_value::Abstra
                  "," << wali::key2str(callee_entry_key) << " " << wali::key2str(to_key) << ") is :";);
   DEBUG_PRINTING(DBG_PRINT_OVERVIEW, w_delta2->print(std::cout) << std::endl;);
   
-  wali::wpds::ewpds::EWPDS* ewpds = dynamic_cast<wali::wpds::ewpds::EWPDS*>(pds_);  
-  if(ewpds) {
-    ewpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
-  } else {
-    wali::wpds::fwpds::FWPDS* fwpds = dynamic_cast<wali::wpds::fwpds::FWPDS*>(pds_);
+  if(is_fwpds_) {
+    wali::wpds::fwpds::FWPDS* fwpds = static_cast<wali::wpds::fwpds::FWPDS*>(pds_);
     fwpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
+  } else {
+    wali::wpds::ewpds::EWPDS* ewpds = static_cast<wali::wpds::ewpds::EWPDS*>(pds_);  
+    ewpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
   }
   UpdateMinMaxVocabularySize(w_delta2->GetAbstractValue()->GetVocabulary().size());
 }
@@ -369,10 +369,10 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
         // Finally, the state is modified to assert that the arg_val is zero before handling rest of the instructions 
         CallSite::arg_iterator argit = CS.arg_begin();
 
-        ref_ptr<abstract_value::AbstractValue> state_cp = bb_abs_trans_cr_.GetState()->Copy();
+        ref_ptr<AbstractValue> state_cp = bb_abs_trans_cr_.GetState()->Copy();
         WrappedDomain_Int arg_val = bb_abs_trans_cr_.getOperandValue(*argit);
         WrappedDomain_Int zero = arg_val.of_const(0);
-        ref_ptr<abstract_value::AbstractValue> assume_cond = arg_val.abs_equal(zero);
+        ref_ptr<AbstractValue> assume_cond = arg_val.abs_equal(zero);
         state_cp->Meet(assume_cond);
 
         wali::Key unreachable_key = mk_wpds_unreachable_key(CS);
@@ -386,7 +386,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
       if(add_delta2_rule && (end_iter != bb->end() && (Instruction*)end_iter != t_inst)) {
         // Add delta2 rule and set initialize_state to true
         wali::Key to_key = mk_wpds_key(end_iter, bb, f); 
-        ref_ptr<abstract_value::AbstractValue> state_cp = bb_abs_trans_cr_.GetState();
+        ref_ptr<AbstractValue> state_cp = bb_abs_trans_cr_.GetState();
         Vocabulary state_cp_voc = state_cp->GetVocabulary();
         AddDelta2RuleToPds(state_cp, from_key, callee_entry_key, to_key, REGULAR_WEIGHT, state_cp_voc, cf);
 
@@ -419,7 +419,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
     Vocabulary post_voc = liveAfterMap[bb];
     post_voc = abstract_domain::replaceVersion(post_voc, 0, 1);
 
-    Vocabulary return_voc = CreateReturnVocabulary(bb->getParent(), CBTI_INT64(1));
+    Vocabulary return_voc = CreateReturnVocabulary(bb->getParent(), Version(1));
     post_voc.insert(return_voc.begin(), return_voc.end());
     DEBUG_PRINTING(DBG_PRINT_DETAILS, abstract_domain::print(std::cout << "\npost_voc:", post_voc););
 
@@ -434,15 +434,15 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
       return;
     }
 
-    UWAssert::shouldNeverHappen(t_inst->getOpcode() != Instruction::Ret);
+    assert(t_inst->getOpcode() == Instruction::Ret);
     bb_abs_trans_cr_.abstractExecuteInst(*t_inst, insLiveBeforeMap, insLiveAfterMap, pre_post_voc);
 
-    ref_ptr<abstract_value::AbstractValue> state;
+    ref_ptr<AbstractValue> state;
     if(add_delta2_rule) {
       // This is a bit awkward as the call is followed by a ret instruction.
       // So to deal with it we create a dummy return node that acts as a mid between the call and the ret instr
       wali::Key dummy_exit_key = mk_exit_wpds_dummy_key(bb->getParent(), ci);
-      ref_ptr<abstract_value::AbstractValue> state_cp = bb_abs_trans_cr_.GetState()->Copy();
+      ref_ptr<AbstractValue> state_cp = bb_abs_trans_cr_.GetState()->Copy();
       AddDelta2RuleToPds(state_cp, from_key, callee_entry_key, dummy_exit_key, REGULAR_WEIGHT, pre_post_voc, cf);
 
       Vocabulary state_voc = bb_abs_trans_cr_.GetState()->GetVocabulary();
@@ -451,11 +451,11 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
       Vocabulary state_post_voc_as_pre_plus_post_voc;
       UnionVocabularies(state_post_voc, state_post_voc_as_pre, state_post_voc_as_pre_plus_post_voc);
 
-      ref_ptr<abstract_value::AbstractValue> state_tp = bb_abs_trans_cr_.GetState()->Top();
+      ref_ptr<AbstractValue> state_tp = bb_abs_trans_cr_.GetState()->Top();
       state_tp->AddVocabulary(state_post_voc_as_pre);
       state_tp->Project(state_post_voc_as_pre_plus_post_voc);
       ref_ptr<AvSemiring> state_tp_av_sem = new AvSemiring(state_tp);
-      ref_ptr<AvSemiring> state_one_av_sem = dynamic_cast<AvSemiring*>(state_tp_av_sem->one().get_ptr());
+      ref_ptr<AvSemiring> state_one_av_sem = static_cast<AvSemiring*>(state_tp_av_sem->one().get_ptr());
       state = state_one_av_sem->GetAbstractValue();
       from_key = dummy_exit_key;
     } else {
@@ -467,7 +467,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
     return;
   } else {
     // Add rules for each of the successor
-    ref_ptr<abstract_value::AbstractValue> state = bb_abs_trans_cr_.GetState();
+    ref_ptr<AbstractValue> state = bb_abs_trans_cr_.GetState();
     for (unsigned i = 0, n_succ = t_inst->getNumSuccessors(); i < n_succ; ++i) {
       llvm::BasicBlock* succ = t_inst->getSuccessor(i);
       DEBUG_PRINTING(DBG_PRINT_OVERVIEW, std::cout << "\nAnalyzing successor: " << getName(succ););
@@ -516,7 +516,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
         break;
       default:
         // Cannot handle other kind of terminator instructions
-        UWAssert::shouldNeverHappen();
+        assert(false);
         bb_abs_trans_cr_.abstractExecuteInst(*t_inst, insLiveBeforeMap, insLiveAfterMap, pre_post_voc);
       }
 
@@ -585,6 +585,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
 }
 
 wali::wpds::WPDS* WrappedDomainWPDSCreator::createWPDS(bool is_fwpds) {
+  is_fwpds_ = is_fwpds;
   if(is_fwpds) {
     pds_ = new wali::wpds::fwpds::FWPDS();
   }
@@ -666,7 +667,7 @@ wali::wfa::WFA* WrappedDomainWPDSCreator::BuildAutomaton(bool is_backward, std::
   //       to the set of pushed call-site keys?).
 
   value_to_dim_t global_instr_value_to_dim;
-  Vocabulary global_voc = CreateGlobalVocabulary(getModule(), CBTI_INT64(0), global_instr_value_to_dim);
+  Vocabulary global_voc = CreateGlobalVocabulary(getModule(), Version(0), global_instr_value_to_dim);
   llvm::DataLayout TD = bb_abs_trans_cr_.getDataLayout();
 
   LazyCallGraph lcallgraph(*getModule());
@@ -685,7 +686,7 @@ wali::wfa::WFA* WrappedDomainWPDSCreator::BuildAutomaton(bool is_backward, std::
       for (BasicBlock &bb : f) {
         if (isa<ReturnInst>(bb.getTerminator())) {
           if(exit_bb != NULL)
-            UWAssert::shouldNeverHappen();
+            assert(false);
           exit_bb = &bb;
         }
       }
@@ -693,7 +694,7 @@ wali::wfa::WFA* WrappedDomainWPDSCreator::BuildAutomaton(bool is_backward, std::
 
     value_to_dim_t temp_instr_value_to_dim;
     temp_instr_value_to_dim = global_instr_value_to_dim;
-    Vocabulary arg_voc = CreateFunctionArgumentVocabulary(&f, CBTI_INT64(0), temp_instr_value_to_dim);
+    Vocabulary arg_voc = CreateFunctionArgumentVocabulary(&f, Version(0), temp_instr_value_to_dim);
     Vocabulary voc0;
     UnionVocabularies(global_voc, arg_voc, voc0);
 
@@ -723,10 +724,10 @@ ref_ptr<AvSemiring> WrappedDomainWPDSCreator::GetStartingState(const Vocabulary&
   av_dvoc_top->Project(double_voc); // Ensure av_dvoc_top's vocabulary is exactly double_voc
 
   std::map<DimensionKey, bool> vocab_sign;
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top_wav = new abstract_value::BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
+  ref_ptr<BitpreciseWrappedAbstractValue> top_wav = new BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
   ref_ptr<AvSemiring> av = new AvSemiring(top_wav, "", "", REGULAR_WEIGHT);
 
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> start_wav = dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(dynamic_cast<AvSemiring*>(av->one().get_ptr())->GetAbstractValue().get_ptr());
+  ref_ptr<BitpreciseWrappedAbstractValue> start_wav = static_cast<BitpreciseWrappedAbstractValue*>(static_cast<AvSemiring*>(av->one().get_ptr())->GetAbstractValue().get_ptr());
   
   // TODO: Get signedness information by type inference. For now, we assume everything is signed
   for(Vocabulary::const_iterator it = voc.begin(); it != voc.end(); it++) {

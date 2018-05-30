@@ -11,8 +11,12 @@ using wali::sem_elem_t;
 // Confluence Function.
 class MergeFunction : public wali::IMergeFn {
 public:  
-  /// Constructor.
-  MergeFunction(const Vocabulary& global_postvoc_callee, const DimensionKey& ret_key_callee, const DimensionKey& ret_key_caller, sem_elem_t call_to_func_entry);
+  // Constructor: Expects DUMMY_KEY for ret_key_callee and ret_key_caller
+  //              if the function call doesn't return any value.
+  MergeFunction(const abstract_domain::Vocabulary& global_postvoc_callee, 
+                const abstract_domain::DimensionKey& ret_key_callee, 
+                const abstract_domain::DimensionKey& ret_key_caller, 
+                sem_elem_t call_to_func_entry);
 
   ~MergeFunction() {}
 
@@ -23,8 +27,8 @@ public:
   virtual bool equal(wali::merge_fn_t mf);
 
 private:
-  Vocabulary global_postvoc_callee_;
-  DimensionKey ret_key_callee_, ret_key_caller_;
+  abstract_domain::Vocabulary global_postvoc_callee_;
+  abstract_domain::DimensionKey ret_key_callee_, ret_key_caller_;
   sem_elem_t call_to_func_entry_;
 };
 

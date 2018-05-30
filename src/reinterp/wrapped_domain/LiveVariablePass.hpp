@@ -10,13 +10,13 @@
 namespace {
   class LiveVariableAnalysis: public llvm::FunctionPass {
   public:
-    typedef std::map<llvm::BasicBlock *, Vocabulary> BBtoVocMap;
-    typedef std::map<llvm::Instruction *, Vocabulary> InstrToVocMap;
+    typedef std::map<llvm::BasicBlock *, abstract_domain::Vocabulary> BBtoVocMap;
+    typedef std::map<llvm::Instruction *, abstract_domain::Vocabulary> InstrToVocMap;
     typedef llvm_abstract_transformer::value_to_dim_t value_to_dim_t;
-    typedef std::map<llvm::Value*, std::pair<DimensionKey, unsigned> > AllocaMap;
+    typedef std::map<llvm::Value*, std::pair<abstract_domain::DimensionKey, unsigned> > AllocaMap;
 
   private:
-    Vocabulary fvoc, farg, falloca, fret, fins, fglobal;
+    abstract_domain::Vocabulary fvoc, farg, falloca, fret, fins, fglobal;
     value_to_dim_t value_to_dim;
     AllocaMap alloca_map;
     BBtoVocMap liveBeforeMap;
@@ -52,15 +52,15 @@ namespace {
     virtual bool runOnFunction(llvm::Function& F) {
       value_to_dim.clear();
       alloca_map.clear();
-      farg = llvm_abstract_transformer::CreateFunctionArgumentVocabulary(&F, CBTI_INT64(0), value_to_dim);
-      falloca = llvm_abstract_transformer::CreateAllocaVocabulary(&F, CBTI_INT64(0), *TD_, alloca_map);
-      fret = llvm_abstract_transformer::CreateReturnVocabulary(&F, CBTI_INT64(0));
+      farg = llvm_abstract_transformer::CreateFunctionArgumentVocabulary(&F, abstract_domain::Version(0), value_to_dim);
+      falloca = llvm_abstract_transformer::CreateAllocaVocabulary(&F, abstract_domain::Version(0), *TD_, alloca_map);
+      fret = llvm_abstract_transformer::CreateReturnVocabulary(&F, abstract_domain::Version(0));
       fins = llvm_abstract_transformer::CreateFunctionInstructionVocabulary(&F, *TD_, value_to_dim);
-      fglobal = llvm_abstract_transformer::CreateGlobalVocabulary(F.begin()->getModule(), CBTI_INT64(0), value_to_dim);
+      fglobal = llvm_abstract_transformer::CreateGlobalVocabulary(F.begin()->getModule(), abstract_domain::Version(0), value_to_dim);
 
 
       fvoc.clear();
-      Vocabulary arg_alloca, arg_alloca_ret, arg_alloca_ret_ins;
+      abstract_domain::Vocabulary arg_alloca, arg_alloca_ret, arg_alloca_ret_ins;
       UnionVocabularies(farg, falloca, arg_alloca);
       UnionVocabularies(arg_alloca, fret, arg_alloca_ret);
       UnionVocabularies(arg_alloca_ret, fins, arg_alloca_ret_ins);
@@ -166,15 +166,15 @@ namespace {
         llvm::BasicBlock *bb = *oneBB;
         worklist.erase(bb);
 
-        Vocabulary newLiveAfter = computeLiveAfter(bb);
+        abstract_domain::Vocabulary newLiveAfter = computeLiveAfter(bb);
 
         // update the liveAfter map
         liveAfterMap.erase(bb);
         liveAfterMap[bb] = newLiveAfter;
         // compute its new liveBefore, see if it has changed (it can only
         // get bigger)
-        Vocabulary newLiveBefore = computeLiveBefore(bb);
-        Vocabulary oldLiveBefore = liveBeforeMap[bb];
+        abstract_domain::Vocabulary newLiveBefore = computeLiveBefore(bb);
+        abstract_domain::Vocabulary oldLiveBefore = liveBeforeMap[bb];
         if (newLiveBefore.size() > oldLiveBefore.size()) {
           // update the liveBefore map and put all preds of bb on worklist
           liveBeforeMap.erase(bb);
@@ -195,7 +195,7 @@ namespace {
 	// do:    compute and return bb's current LiveBefore set:
 	//          (bb.liveAfter - bb.kill) union bb.gen
 	// **********************************************************************
-    Vocabulary computeLiveBefore(llvm::BasicBlock *bb) {
+    abstract_domain::Vocabulary computeLiveBefore(llvm::BasicBlock *bb) {
 		return vocUnion(
 				vocSubtract(liveAfterMap[bb], liveVarsKillMap[bb]),
 				liveVarsGenMap[bb]);
@@ -209,8 +209,8 @@ namespace {
 	// do:    compute and return bb's current LiveAfter set: the union
 	//        of the LiveBefore sets of all of bb's CFG successors
 	// **********************************************************************
-    Vocabulary computeLiveAfter(llvm::BasicBlock *bb) {
-      Vocabulary result;
+    abstract_domain::Vocabulary computeLiveAfter(llvm::BasicBlock *bb) {
+      abstract_domain::Vocabulary result;
       for (llvm::succ_iterator SI = succ_begin(bb); SI
              != succ_end(bb); SI++) {
         llvm::BasicBlock *oneSucc = *SI;
@@ -254,18 +254,18 @@ namespace {
 	// do:    return the vocabulary that are used before
 	//        being defined in bb; include aliases!
 	// **********************************************************************
-    Vocabulary getUpwardsExposedUses(llvm::BasicBlock *bb) {
-      Vocabulary result;
-      Vocabulary defs;
+    abstract_domain::Vocabulary getUpwardsExposedUses(llvm::BasicBlock *bb) {
+      abstract_domain::Vocabulary result;
+      abstract_domain::Vocabulary defs;
       for (llvm::BasicBlock::iterator instruct = bb->begin(), instructEnd =
              bb->end(); instruct != instructEnd; instruct++) {
-        Vocabulary uses = getOneInstrRegUses(instruct);
-        Vocabulary upUses = vocSubtract(uses, defs);
+        abstract_domain::Vocabulary uses = getOneInstrRegUses(instruct);
+        abstract_domain::Vocabulary upUses = vocSubtract(uses, defs);
         result = vocUnion(result, upUses);
-        Vocabulary defSet = getOneInstrRegDefs(instruct);
-        for (Vocabulary::iterator IT = defSet.begin(); IT
+        abstract_domain::Vocabulary defSet = getOneInstrRegDefs(instruct);
+        for (abstract_domain::Vocabulary::iterator IT = defSet.begin(); IT
                != defSet.end(); IT++) {
-          DimensionKey oneDef = *IT;
+          abstract_domain::DimensionKey oneDef = *IT;
           defs.insert(oneDef);
         }
       } // end iterate over all instrutions in this basic block
@@ -279,8 +279,8 @@ namespace {
 	// given: bb      ptr to a basic block
 	// do:    return the set of regs that are defined in bb
 	// **********************************************************************
-    Vocabulary getAllDefs(llvm::BasicBlock *bb) {
-      Vocabulary result;
+    abstract_domain::Vocabulary getAllDefs(llvm::BasicBlock *bb) {
+      abstract_domain::Vocabulary result;
 
       // iterate over all instructions in bb
       //   for each operand that is a non-zero reg:
@@ -289,7 +289,7 @@ namespace {
       //
       for (llvm::BasicBlock::iterator instruct = bb->begin(), instructEnd =
 				bb->end(); instruct != instructEnd; instruct++) {
-        Vocabulary oneinstrdef = getOneInstrRegDefs(instruct);
+        abstract_domain::Vocabulary oneinstrdef = getOneInstrRegDefs(instruct);
         result = vocUnion(result, oneinstrdef);
       } // end iterate over all instrutions in this basic block
       return result;
@@ -301,8 +301,8 @@ namespace {
 	// return the set of registers (virtual or physical) used by the
 	// given instruction, including aliases of any physical registers
 	//**********************************************************************
-    Vocabulary getOneInstrRegUses(llvm::Instruction *instruct) {
-      Vocabulary result;
+    abstract_domain::Vocabulary getOneInstrRegUses(llvm::Instruction *instruct) {
+      abstract_domain::Vocabulary result;
       unsigned numOperands = instruct->getNumOperands();
 
       // Add global vocabulary for use in the first instruction
@@ -312,9 +312,9 @@ namespace {
         result = fglobal;
 
       // Handle load instruction separately
-      llvm::LoadInst* LI = dynamic_cast<llvm::LoadInst*>(instruct);
-      if(LI) {
-        DimensionKey k;
+      if(llvm::LoadInst::classof(instruct)) {
+        llvm::LoadInst* LI = static_cast<llvm::LoadInst*>(instruct);
+        abstract_domain::DimensionKey k;
         bool isalloca = llvm_abstract_transformer::isLoadAddrInAllocaMap(alloca_map, LI, *TD_, k);
         if(isalloca)
           result.insert(k);
@@ -325,7 +325,7 @@ namespace {
           // Check if the Value MOp is in value_to_dim
           value_to_dim_t::const_iterator vec_it = llvm_abstract_transformer::findByValue(value_to_dim, MOp);
           if (vec_it != value_to_dim.end()) {
-            DimensionKey k = vec_it->second;
+            abstract_domain::DimensionKey k = vec_it->second;
             result.insert(k);
           }
         }
@@ -337,20 +337,20 @@ namespace {
 	//**********************************************************************
 	// getOneInstrRegDefs
 	//**********************************************************************
-    Vocabulary getOneInstrRegDefs(llvm::Instruction *instruct) {
-      Vocabulary result;
+    abstract_domain::Vocabulary getOneInstrRegDefs(llvm::Instruction *instruct) {
+      abstract_domain::Vocabulary result;
 
       // Handle store instruction separately
-      llvm::StoreInst* SI = dynamic_cast<llvm::StoreInst*>(instruct);
-      if(SI) {
-        DimensionKey k;
+      if(llvm::StoreInst::classof(instruct)) {
+        llvm::StoreInst* SI = static_cast<llvm::StoreInst*>(instruct);
+        abstract_domain::DimensionKey k;
         bool isalloca = llvm_abstract_transformer::isStoreAddrInAllocaMap(alloca_map, SI, *TD_, k);
         if(isalloca)
           result.insert(k);
       } else {
         // Handle ret instruction
-        llvm::ReturnInst* RI = dynamic_cast<llvm::ReturnInst*>(instruct);
-        if(RI) {
+        if(llvm::ReturnInst::classof(instruct)) {
+          llvm::ReturnInst* RI = static_cast<llvm::ReturnInst*>(instruct);
           // For return instruction return the return vocabulary fret as the vocabulary defined by this instr
           if (instruct->getNumOperands()) {
             return fret;
@@ -359,7 +359,7 @@ namespace {
           // Check if the Value instruct is in value_to_dim
           value_to_dim_t::const_iterator vec_it = llvm_abstract_transformer::findByValue(value_to_dim, instruct);
           if (vec_it != value_to_dim.end()) {
-            DimensionKey k = vec_it->second;
+            abstract_domain::DimensionKey k = vec_it->second;
             result.insert(k);
           }
         }
@@ -381,7 +381,7 @@ namespace {
 	//        liveBefore = (liveAfter - kill) union gen
 	// **********************************************************************
 	void liveForInstr(std::vector<llvm::Instruction *> instVector,
-                      Vocabulary liveAfter) {
+                      abstract_domain::Vocabulary liveAfter) {
       while (instVector.size() > 0) {
         llvm::Instruction *oneInstr = instVector.back();
         instVector.pop_back();
@@ -392,9 +392,9 @@ namespace {
         //   remove the reg defined here (if any) from the set
         //   then add all used reg operands
 
-        Vocabulary liveBefore;
-        Vocabulary gen = getOneInstrRegUses(oneInstr);
-        Vocabulary kill = getOneInstrRegDefs(oneInstr);
+        abstract_domain::Vocabulary liveBefore;
+        abstract_domain::Vocabulary gen = getOneInstrRegUses(oneInstr);
+        abstract_domain::Vocabulary kill = getOneInstrRegDefs(oneInstr);
         if (kill.size() != 0) {
           liveBefore = vocUnion(vocSubtract(liveAfter, kill), gen);
         } else {
@@ -411,8 +411,8 @@ namespace {
 	// **********************************************************************
 	// vocUnion
 	// **********************************************************************
-    Vocabulary vocUnion(const Vocabulary& S1, const Vocabulary& S2) {
-      Vocabulary result;
+    abstract_domain::Vocabulary vocUnion(const abstract_domain::Vocabulary& S1, const abstract_domain::Vocabulary& S2) {
+      abstract_domain::Vocabulary result;
       UnionVocabularies(S1, S2, result);
       return result;
 	}
@@ -420,8 +420,8 @@ namespace {
 	// **********************************************************************
 	// vocSubtract
 	// **********************************************************************
-	Vocabulary vocSubtract(const Vocabulary& S1, const Vocabulary& S2) {
-      Vocabulary result;
+	abstract_domain::Vocabulary vocSubtract(const abstract_domain::Vocabulary& S1, const abstract_domain::Vocabulary& S2) {
+      abstract_domain::Vocabulary result;
       SubtractVocabularies(S1, S2, result);
       return result;
 	}

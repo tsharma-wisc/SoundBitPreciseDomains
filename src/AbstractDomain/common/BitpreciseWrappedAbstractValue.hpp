@@ -220,7 +220,7 @@ public:
 
   virtual bool ImplementsExtend() { return true;}
 
-  ref_ptr<AbstractValue> Extend(const ref_ptr<AbstractValue> &op2) { 
+  ref_ptr<AbstractValue> Extend(const ref_ptr<AbstractValue> &op2) const { 
     utils::Timer timer("\nBitpreciseWrappedAbstractValue Extend timer:", std::cout, true);
     DEBUG_PRINTING(DBG_PRINT_DETAILS, std::cout << "\nIn BitpreciseWrappedAbstractValue extend:";);
 

@@ -83,11 +83,6 @@ namespace abstract_domain
   }
 
   template <typename PSET>
-  inline bool PointsetPowersetAv<PSET>::operator!= (const PointsetPowersetAv&that) const {
-    return !(*this==that);
-  }
-
-  template <typename PSET>
   inline bool PointsetPowersetAv<PSET>::Overapproximates(const ref_ptr<AbstractValue>& that) const {
     const ref_ptr<PointsetPowersetAv> that_pp = static_cast<PointsetPowersetAv *>(that.get_ptr());
     assert(equalities_only_ == that_pp->equalities_only_);

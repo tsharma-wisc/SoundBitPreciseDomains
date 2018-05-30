@@ -5,9 +5,13 @@
 #include "llvm/IR/Constants.h"
 
 #include "utils/timer/timer.hpp"
+#include "utils/debug/DebugOptions.hpp"
 #include "llvm/IR/CFG.h"
+#include <sstream>
 
 extern bool cmdlineparam_allow_phis;
+using namespace utils;
+using namespace abstract_domain;
 
 namespace llvm_abstract_transformer {
 
@@ -210,7 +214,7 @@ namespace llvm_abstract_transformer {
       for(llvm::BasicBlock::iterator inst_it = bb->begin(); inst_it != bb->end(); inst_it++) {
         llvm::Instruction* I = inst_it;
         if(I->getOpcode() == llvm::Instruction::Alloca) {
-          llvm::AllocaInst* ai = dynamic_cast<llvm::AllocaInst*>(I);
+          llvm::AllocaInst* ai = static_cast<llvm::AllocaInst*>(I);
 
           // Type to be allocated          
           llvm::Type *Ty = ai->getType()->getElementType();  
@@ -221,9 +225,9 @@ namespace llvm_abstract_transformer {
           // cannot handle it
           bool is_const = false;
           llvm::APInt NumElements;
-          if(llvm::Constant* C = dynamic_cast<llvm::Constant*>(I->getOperand(0))) {
+          if(llvm::Constant* C = static_cast<llvm::Constant*>(I->getOperand(0))) {
             if(C->getType()->getTypeID() == llvm::Type::IntegerTyID) {
-              NumElements = dynamic_cast<llvm::ConstantInt*>(C)->getValue();
+              NumElements = static_cast<llvm::ConstantInt*>(C)->getValue();
               is_const = true;
             }
           }
@@ -375,7 +379,7 @@ namespace llvm_abstract_transformer {
 
     // Handle load/store by looking them up in alloca_map and if present add them to v
     // Handle load instruction separately
-    llvm::LoadInst* LI = dynamic_cast<llvm::LoadInst*>(I);
+    llvm::LoadInst* LI = static_cast<llvm::LoadInst*>(I);
     if(LI) {
       DimensionKey k;
       bool isalloca = isLoadAddrInAllocaMap(alloca_map, LI, TD, k);
@@ -383,7 +387,7 @@ namespace llvm_abstract_transformer {
         v.insert(abstract_domain::replaceVersion(k, 0, 1));
       }
     } else {
-      llvm::StoreInst* SI = dynamic_cast<llvm::StoreInst*>(I);
+      llvm::StoreInst* SI = static_cast<llvm::StoreInst*>(I);
       if(SI) {
         DimensionKey k;
         bool isalloca = isStoreAddrInAllocaMap(alloca_map, SI, TD, k);
@@ -454,12 +458,11 @@ namespace llvm_abstract_transformer {
     value_to_dim_t::const_iterator vec_it = findByValue(value_to_dim, val);
     if (vec_it != value_to_dim.end()) {
       DimensionKey k = vec_it->second;
-      if(abstract_domain::isVersionInDimension(k, unversioned_version)) {
+      if(isVersionInDimension(k, UNVERSIONED_VERSION)) {
         std::cout << "\n\nNote: This value " << getValueName(val) << " is a variable that can be ";
         std::cout << "defined after use in a BB as it is used in a PHI node with self-loop. ";
         std::cout << "For soundness, making this vocabulary a non-versioned vocabulary.";
-        DimensionKey k_0 = 
-          abstract_domain::replaceVersion(k, unversioned_version.get_data(), 0);
+        DimensionKey k_0 = replaceVersion(k, UNVERSIONED_VERSION, 0);
         v.erase(k);
         v.insert(k_0);
         value_to_dim[val] = k_0;
@@ -479,7 +482,7 @@ namespace llvm_abstract_transformer {
 
     // In absense of phis, the instruction voc can be unversioned as inst vars 
     // are not live across BBs. This facilitates in more improvement
-    Version ver = unversioned_version;
+    Version ver = UNVERSIONED_VERSION;
 
     for(llvm::Function::iterator bb_it = f->begin(); bb_it != f->end(); bb_it++) {
       llvm::BasicBlock* bb = bb_it;

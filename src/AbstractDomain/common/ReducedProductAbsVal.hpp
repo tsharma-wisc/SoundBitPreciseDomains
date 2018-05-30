@@ -1,7 +1,7 @@
 #ifndef src_AbstractDomain_common_ReducedProductAbstractValue_hpp
 #define src_AbstractDomain_common_ReducedProductAbstractValue_hpp
 
-#includes "src/AbstractDomain/common/AbstractValue.hpp"
+#include "src/AbstractDomain/common/AbstractValue.hpp"
 
 #include <cassert>
 #include <map>
@@ -9,11 +9,11 @@
 
 // TODO: Have Value as an Abstract class proving normal
 // arithmetic operations as expected of Value.
-namespace abstract_value {
+namespace abstract_domain {
 class ReducedProductAbsVal : public AbstractValue
 {
   typedef AbstractValue BaseClass;
-  typedef ref_ptr< AbstractValue > AbsValRefPtr;
+  typedef wali::ref_ptr< AbstractValue > AbsValRefPtr;
 
 public:
 
@@ -82,7 +82,7 @@ public:
     return ss.str();
   }
 
-  virtual ref_ptr<AbstractValue > Parse(const std::string &) const
+  virtual wali::ref_ptr<AbstractValue > Parse(const std::string &) const
   {
     assert (false && "Parse not implemented");
     return NULL;
@@ -148,7 +148,7 @@ public:
   }
 
   //Havoc: Havoc out the vocabulary v, i.e. remove any constraints on them 
-  virtual ref_ptr<AbstractValue> Havoc(const Vocabulary & v) const
+  virtual wali::ref_ptr<AbstractValue> Havoc(const Vocabulary & v) const
   {
     AbsValRefPtr ret_first = first_->Havoc(v);
     AbsValRefPtr ret_second = second_->Havoc(v);
@@ -164,10 +164,10 @@ public:
   }
 
   // reduce this with constraints from that
-  virtual void Reduce(const AbsValRefPtr& that)
+  void Reduce(const AbsValRefPtr& that)
   {
     // Is that a ReducedProduct abstract value?
-    const ReducedProductAbsVal * that_red_prd = dynamic_cast<const ReducedProductAbsVal *>(that.get_ptr());
+    const ReducedProductAbsVal * that_red_prd = static_cast<const ReducedProductAbsVal *>(that.get_ptr());
     if (that_red_prd != NULL) {
       // Call Reduce on each component of "that"
       this->Reduce (that_red_prd->first());
@@ -255,7 +255,6 @@ private:
 
   const ReducedProductAbsVal *downcast( const BaseClass &val) const
   {
-    assert(dynamic_cast<const ReducedProductAbsVal *>(&val));
     return static_cast<const ReducedProductAbsVal *>(&val);
   }
 

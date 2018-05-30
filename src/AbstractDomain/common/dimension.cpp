@@ -5,6 +5,9 @@
 #include <sstream>
 
 const abstract_domain::Version abstract_domain::UNVERSIONED_VERSION = (Version)-1;
+const abstract_domain::DimensionKey DUMMY_KEY("dummy", 
+                                              abstract_domain::UNVERSIONED_VERSION, 
+                                              utils::one);
 
 namespace abstract_domain {
 

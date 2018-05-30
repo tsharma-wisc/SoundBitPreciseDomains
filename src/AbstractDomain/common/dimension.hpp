@@ -58,6 +58,9 @@ namespace abstract_domain {
 
   std::ostream & print(std::ostream & out, const DimensionKey& k);
   std::ostream & print(std::ostream & out, const Vocabulary& v, std::string delimiter = "|");
+
+  // Dummy key placeholder
+  extern DimensionKey DUMMY_KEY;
 }
 
 std::ostream & operator<<(std::ostream & out, const abstract_domain::DimensionKey& k);

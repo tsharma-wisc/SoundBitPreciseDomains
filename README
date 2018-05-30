@@ -2,9 +2,9 @@ README to install and run SoundBitPreciseDomains project.
 First git clone this repository. Let the top folder be SoundBitPreciseDomains be $(SBD_DIR):
 ---------------------------------------External Dependencies----------------------------------------------------
 These steps will install all the external dependencies to the $(SBD_DIR)/external folder:
-1) LLVM: This project works with llvm 3.5.1. Install llvm 3.5.1 as follows:
-   1) tar -xvf llvm-3.5.1.src.tar.xz && mv llvm-3.5.1.src llvm
-   2) tar -xvf cfe-3.5.1.src.tar.xz && mv cfe-3.5.1.src.tar.xz clang
+1) LLVM: This project works with llvm 3.7.1. Install llvm 3.7.1 as follows:
+   1) tar -xvf llvm-3.7.1.src.tar.xz && mv llvm-3.7.1.src llvm
+   2) tar -xvf cfe-3.7.1.src.tar.xz && mv cfe-3.7.1.src.tar.xz clang
    2) mv clang llvm/tools
    3) mkdir build && cd build
    4) ../llvm/configure --prefix=$(SBD_DIR)/external

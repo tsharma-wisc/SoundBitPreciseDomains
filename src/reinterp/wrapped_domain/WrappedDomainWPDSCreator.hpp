@@ -15,7 +15,7 @@ namespace llvm_abstract_transformer {
   // 
   class WrappedDomainWPDSCreator {
   public:
-    typedef std::map<llvm::Value*, DimensionKey> value_to_dim_t;
+    typedef std::map<llvm::Value*, abstract_domain::DimensionKey> value_to_dim_t;
 
   private:
     WrappedDomainBBAbsTransCreator bb_abs_trans_cr_;
@@ -25,12 +25,12 @@ namespace llvm_abstract_transformer {
     // representation of bool values and abstract transformers 
     // (for example, it can be pointset-powerset of polyhedra)
     // Its vocabulary is essentially ignored
-    ref_ptr<abstract_value::AbstractValue> av_;
+    ref_ptr<abstract_domain::AbstractValue> av_;
 
     std::string filename_;
-
     wali::Key program_;
     wali::wpds::WPDS* pds_;
+    bool is_fwpds_;
 
     // This set is populated for the purpose of finding the number of asserts in the program
     std::set<wali::Key> unreachable_keys_;
@@ -41,7 +41,7 @@ namespace llvm_abstract_transformer {
 
   public:
     // av is used to create initial state
-    explicit WrappedDomainWPDSCreator(std::unique_ptr<llvm::Module> M, ref_ptr<abstract_value::AbstractValue> av, std::string& bcprinting_filename, bool add_array_bounds_check);
+    explicit WrappedDomainWPDSCreator(std::unique_ptr<llvm::Module> M, ref_ptr<abstract_domain::AbstractValue> av, std::string& bcprinting_filename, bool add_array_bounds_check);
     ~WrappedDomainWPDSCreator();
 
     llvm::Module* getModule();
@@ -74,15 +74,15 @@ namespace llvm_abstract_transformer {
     bool is_llvm_backedge(const llvm::BasicBlock* bb, const llvm::BasicBlock* succ);
 
     // Helper functions needed to build the starting automaton for poststar
-    ref_ptr<AvSemiring> GetStartingState(const Vocabulary& v, llvm::Function& F);
+    ref_ptr<AvSemiring> GetStartingState(const abstract_domain::Vocabulary& v, llvm::Function& F);
     llvm::BasicBlock::iterator findNonModelCall(llvm::BasicBlock* bb, 
                                                 llvm::BasicBlock::iterator start, 
                                                 llvm::CallInst*& ci) const;
 
     void UpdateMinMaxVocabularySize(size_t voc_size);
-    void AddRuleToPds(ref_ptr<abstract_value::AbstractValue> state, wali::Key from_key, wali::Key to_key, WideningType wty, Vocabulary& voc);
-    void AddDelta2RuleToPds(ref_ptr<abstract_value::AbstractValue> state, wali::Key from_key, wali::Key callee_entry_key, wali::Key to_key, WideningType wty, Vocabulary& voc, wali::IMergeFn* cf);
-    void AddDelta0RuleToPds(ref_ptr<abstract_value::AbstractValue> state, wali::Key from_key, WideningType wty, Vocabulary& voc);
+    void AddRuleToPds(ref_ptr<abstract_domain::AbstractValue> state, wali::Key from_key, wali::Key to_key, WideningType wty, abstract_domain::Vocabulary& voc);
+    void AddDelta2RuleToPds(ref_ptr<abstract_domain::AbstractValue> state, wali::Key from_key, wali::Key callee_entry_key, wali::Key to_key, WideningType wty, abstract_domain::Vocabulary& voc, wali::IMergeFn* cf);
+    void AddDelta0RuleToPds(ref_ptr<abstract_domain::AbstractValue> state, wali::Key from_key, WideningType wty, abstract_domain::Vocabulary& voc);
   };
 
 } // End llvm_abstract_transformer namespace

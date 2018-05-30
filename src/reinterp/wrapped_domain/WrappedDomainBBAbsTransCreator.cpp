@@ -8,6 +8,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -24,12 +25,13 @@
 
 #include "src/AbstractDomain/common/ReducedProductAbsVal.hpp"
 #include "src/AbstractDomain/PointsetPowerset/pointset_powerset_av.hpp"
-#include "external/ppl-1.1/src/Octagonal_Shape_defs.hh"
+#include "ppl.hh"
 
 using namespace llvm;
+using namespace abstract_domain;
 
 namespace llvm_abstract_transformer {
-  WrappedDomainBBAbsTransCreator::WrappedDomainBBAbsTransCreator(std::unique_ptr<Module> M, ref_ptr<abstract_value::AbstractValue> av, bool add_array_bounds_check) : ExecutionEngine(std::move(M)), TD(Modules.back().get()), av_prevoc_(av->Top()), add_array_bounds_check_(add_array_bounds_check) {
+  WrappedDomainBBAbsTransCreator::WrappedDomainBBAbsTransCreator(std::unique_ptr<Module> M, ref_ptr<AbstractValue> av, bool add_array_bounds_check) : ExecutionEngine(std::move(M)), TD(Modules.back().get()), av_prevoc_(av->Top()), add_array_bounds_check_(add_array_bounds_check) {
     setDataLayout(&TD);
     IL = new IntrinsicLowering(TD);
   }
@@ -58,7 +60,7 @@ namespace llvm_abstract_transformer {
     Vocabulary bb_voc = GetBasicBlockVocabulary(bb, start, end, getDataLayout(), instr_value_to_dim_, alloca_map_);
     Vocabulary pre_bb_voc = abstract_domain::getVocabularySubset(bb_voc, 0);
     Vocabulary post_bb_voc = abstract_domain::getVocabularySubset(bb_voc, 1);
-    Vocabulary unversioned_bb_voc = abstract_domain::getVocabularySubset(bb_voc, unversioned_version.get_data());
+    Vocabulary unversioned_bb_voc = abstract_domain::getVocabularySubset(bb_voc, UNVERSIONED_VERSION);
 
     DEBUG_PRINTING(DBG_PRINT_DETAILS, 
                    std::cout << "\nInitializeMembers for bb " << getName(bb);
@@ -84,18 +86,18 @@ namespace llvm_abstract_transformer {
 
     if(initialize_state) {  
       // Use av_prevoc_ to get a handle on the abstract value for av_dvoc_top
-      ref_ptr<abstract_value::AbstractValue> av_dvoc_top = av_prevoc_->Top(); 
+      ref_ptr<AbstractValue> av_dvoc_top = av_prevoc_->Top(); 
       av_dvoc_top->AddVocabulary(bb_voc);
       av_dvoc_top->AddVocabulary(post_voc);
 
       // Keep the vocabulary sign empty in the beginning, 
       // add vocabulary for wrapping only if needed
       std::map<DimensionKey, bool> vocab_sign;
-      state_ = new abstract_value::BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
+      state_ = new BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
       ref_ptr<AvSemiring> av_sem = new AvSemiring(state_);
-      ref_ptr<AvSemiring> one = dynamic_cast<AvSemiring*>(av_sem->one().get_ptr());
+      ref_ptr<AvSemiring> one = static_cast<AvSemiring*>(av_sem->one().get_ptr());
       one->SetToSyntacticOne();
-      state_ = dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(one->GetAbstractValue().get_ptr());
+      state_ = static_cast<BitpreciseWrappedAbstractValue*>(one->GetAbstractValue().get_ptr());
     }
 
     state_->AddVocabulary(bb_voc);
@@ -116,43 +118,43 @@ namespace llvm_abstract_transformer {
     return Modules.back().get();
   }
 
-  ref_ptr<abstract_value::AbstractValue> WrappedDomainBBAbsTransCreator::GetState() {
+  ref_ptr<AbstractValue> WrappedDomainBBAbsTransCreator::GetState() {
     return state_.get_ptr();
   }
 
-  ref_ptr<abstract_value::AbstractValue> WrappedDomainBBAbsTransCreator::GetPreVocAv() {
+  ref_ptr<AbstractValue> WrappedDomainBBAbsTransCreator::GetPreVocAv() {
     return av_prevoc_;
   }
 
-  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> WrappedDomainBBAbsTransCreator::GetBitpreciseWrappedState(ref_ptr<abstract_value::AbstractValue> st) const {
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> bpwav = dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(st.get_ptr());
+  ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomainBBAbsTransCreator::GetBitpreciseWrappedState(ref_ptr<AbstractValue> st) const {
+    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = static_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
     assert(bpwav != NULL);
     if(false/*add_array_bounds_check_*/) {
-      ref_ptr<abstract_value::ReducedProductAbsVal> rpav = dynamic_cast<abstract_value::ReducedProductAbsVal*>(bpwav->av().get_ptr());
+      ref_ptr<ReducedProductAbsVal> rpav = static_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
       assert(rpav != NULL);
 
-      ref_ptr<abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav = 
-        dynamic_cast<abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
+      ref_ptr<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav =
+        static_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
       assert(eqav != NULL && eqav->equalities_only());
-      ref_ptr<abstract_value::ReducedProductAbsVal> rpav_first = 
-        dynamic_cast<abstract_value::ReducedProductAbsVal*>(rpav->first().get_ptr());
+      ref_ptr<ReducedProductAbsVal> rpav_first =
+        static_cast<ReducedProductAbsVal*>(rpav->first().get_ptr());
     assert(rpav_first == NULL);
-      return new abstract_value::BitpreciseWrappedAbstractValue(rpav->first(), bpwav->wrapped_voc());
+      return new BitpreciseWrappedAbstractValue(rpav->first(), bpwav->wrapped_voc());
     }
     return bpwav;
   }
 
-  void WrappedDomainBBAbsTransCreator::SetState(ref_ptr<abstract_value::AbstractValue> st) {
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> bpwav = dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(st.get_ptr());
+  void WrappedDomainBBAbsTransCreator::SetState(ref_ptr<AbstractValue> st) {
+    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = static_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
     assert(bpwav != NULL);
     state_ = bpwav;
 
     // Sanity check
     if(false/*add_array_bounds_check_*/) {
-      ref_ptr<abstract_value::ReducedProductAbsVal> rpav = dynamic_cast<abstract_value::ReducedProductAbsVal*>(bpwav->av().get_ptr());
+      ref_ptr<ReducedProductAbsVal> rpav = static_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
       assert(rpav != NULL);
-      ref_ptr<abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav = 
-        dynamic_cast<abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
+      ref_ptr<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav =
+        static_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
       assert(eqav != NULL && eqav->equalities_only());
     }
   }
@@ -190,7 +192,7 @@ namespace llvm_abstract_transformer {
     // Initialize state_ and bb_to calculate abstract transformer
     InitializeMembers(bb, start, end, pre_voc, post_voc, alloca_map, instr_value_to_dim, initialize_state);
 
-    UWAssert::shouldNeverHappen(start == end);
+    assert(start != end);
     while(start != end) {
       Instruction* I = start;
       std::stringstream iss;
@@ -276,11 +278,11 @@ namespace llvm_abstract_transformer {
   //===----------------------------------------------------------------------===//
 
   void WrappedDomainBBAbsTransCreator::abstractExecuteRet(ReturnInst &I) {
-    UWAssert::shouldNeverHappen(succ_ != nullptr); // Ensure that the successor is NULL
+    assert(succ_ == nullptr); // Ensure that the successor is NULL
 
     // Save away the return value... (if we are not 'ret void' or the return not part of vocabulary)
     DimensionKey k;
-    if (I.getNumOperands() && CreateDimensionFromType(std::string("return_") + getName(I.getParent()->getParent()), I.getReturnValue()->getType(), k, CBTI_INT64(1))) {
+    if (I.getNumOperands() && CreateDimensionFromType(std::string("return_") + getName(I.getParent()->getParent()), I.getReturnValue()->getType(), k, Version(1))) {
       WrappedDomain_Int R = getOperandValue(I.getReturnValue());
       SetDimensionInState(k, R);
     }
@@ -297,7 +299,7 @@ namespace llvm_abstract_transformer {
       if(succ_ == cast<BasicBlock>(i.getCaseSuccessor())) {
         WrappedDomain_Int CaseVal = getOperandValue(i.getCaseValue());
 
-        ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> switch_cond; 
+        ref_ptr<BitpreciseWrappedAbstractValue> switch_cond; 
         switch_cond = CondVal.abs_equal(CaseVal);
         Meet(switch_cond);
         return;
@@ -305,7 +307,7 @@ namespace llvm_abstract_transformer {
     }
 
     // No switch conditions available for defalt dest
-    UWAssert::shouldNeverHappen(succ_ != I.getDefaultDest());
+    assert(succ_ == I.getDefaultDest());
   }
 
   void WrappedDomainBBAbsTransCreator::abstractExecuteBr(BranchInst &I) {
@@ -314,12 +316,12 @@ namespace llvm_abstract_transformer {
     Dest = I.getSuccessor(0);          // Uncond branches have a fixed dest...
     if (!I.isUnconditional()) {
       // Succ should be one of the two branch conditions
-      UWAssert::shouldNeverHappen((succ_ != I.getSuccessor(0)) && (succ_ != I.getSuccessor(1)));
+      assert((succ_ == I.getSuccessor(0)) || (succ_ == I.getSuccessor(1)));
 
       Value *Cond = I.getCondition(); 
     
       bool found = false;
-      std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > abs_cond = GetBoolValue(Cond, found);
+      std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > abs_cond = GetBoolValue(Cond, found);
       if(found) {
         if(succ_ == I.getSuccessor(0)) {
           DEBUG_PRINTING(DBG_PRINT_DETAILS, abs_cond.first->print(std::cout << "\nabs_cond.first:"););
@@ -336,7 +338,7 @@ namespace llvm_abstract_transformer {
         WrappedDomain_Int cond_val = getOperandValue(Cond);
         WrappedDomain_Int zero = cond_val.of_const(0);
 
-        ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> br_cond; 
+        ref_ptr<BitpreciseWrappedAbstractValue> br_cond;
         if(succ_ == I.getSuccessor(0)) {
           br_cond = cond_val.abs_not_equal(zero); // succ is true successor
         } else {
@@ -346,11 +348,11 @@ namespace llvm_abstract_transformer {
         Meet(br_cond);
       }
     }
-    UWAssert::shouldNeverHappen(succ_ != Dest);
+    assert(succ_ == Dest);
   }
 
   void WrappedDomainBBAbsTransCreator::abstractExecuteIndirectBr(IndirectBrInst &I) {
-    UWAssert::shouldNeverHappen("Cannot handle indirect branches.");
+    assert(false && "Cannot handle indirect branches.");
   }
 
   // Check to see if this is a model function. SVCOMP special functions such as 
@@ -375,28 +377,31 @@ namespace llvm_abstract_transformer {
     utils::Timer timer("obtainMergeFunction:", std::cout, true);
 
     // Check to see if this is a non-model function call
-    UWAssert::shouldNeverHappen (isModel(cs.getCalledFunction()));
+    assert (isModel(cs.getCalledFunction()));
 
     Function *called_func = cs.getCalledFunction();
     Type* t = called_func->getReturnType();
     DimensionKey ret_key_callee, ret_key_caller;
-    bool b = CreateDimensionFromType(std::string("return_") + getName(called_func), t, ret_key_callee, CBTI_INT64(1));
+    bool b = CreateDimensionFromType(std::string("return_") + getName(called_func),
+                                     t,
+                                     ret_key_callee,
+                                     Version(1));
     if(b) {
       value_to_dim_t::const_iterator vec_it = findByValue(instr_value_to_dim_, cs.getInstruction());
 
-      UWAssert::shouldNeverHappen(vec_it == instr_value_to_dim_.end());
+      assert(vec_it != instr_value_to_dim_.end());
       ret_key_caller = vec_it->second;
     } else {
-      ret_key_caller = -1;
-      ret_key_callee = -1;
+      ret_key_caller = DUMMY_KEY;
+      ret_key_callee = DUMMY_KEY;
     }
 
 
     value_to_dim_t temp_instr_value_to_dim;
 
-    Vocabulary arg_voc_cld_func = CreateFunctionArgumentVocabulary(called_func, CBTI_INT64(1), temp_instr_value_to_dim);
+    Vocabulary arg_voc_cld_func = CreateFunctionArgumentVocabulary(called_func, Version(1), temp_instr_value_to_dim);
     std::map<Value*, std::pair<DimensionKey, unsigned> > temp_alloca_map;
-    Vocabulary alloca_voc_cld_func = CreateAllocaVocabulary(called_func, CBTI_INT64(1), getDataLayout(), temp_alloca_map);
+    Vocabulary alloca_voc_cld_func = CreateAllocaVocabulary(called_func, Version(1), getDataLayout(), temp_alloca_map);
 
     Vocabulary post_voc;
     UnionVocabularies(arg_voc_cld_func, alloca_voc_cld_func, post_voc);
@@ -416,17 +421,17 @@ namespace llvm_abstract_transformer {
       if(vec_it != temp_instr_value_to_dim.end()) {
         callee_arg_k = vec_it->second;
         WrappedDomain_Int caller_arg_val = getOperandValue(*argit);
-        ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> assign_k = caller_arg_val.assign_to_two_voc(callee_arg_k, state_->GetVocabulary());
+        ref_ptr<BitpreciseWrappedAbstractValue> assign_k = caller_arg_val.assign_to_two_voc(callee_arg_k, state_->GetVocabulary());
         state_->Meet(assign_k.get_ptr());
         
       }
     }
 
     // Create the merge function
-    Vocabulary global_voc0 = CreateGlobalVocabulary(getModule(), CBTI_INT64(0), temp_instr_value_to_dim);
+    Vocabulary global_voc0 = CreateGlobalVocabulary(getModule(), Version(0), temp_instr_value_to_dim);
     Vocabulary global_voc1 = abstract_domain::replaceVersion(global_voc0, 0, 1);
-    ref_ptr<abstract_value::AbstractValue> state_cp = state_->Copy();
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> state_cp_bpw = GetBitpreciseWrappedState(state_cp);
+    ref_ptr<AbstractValue> state_cp = state_->Copy();
+    ref_ptr<BitpreciseWrappedAbstractValue> state_cp_bpw = GetBitpreciseWrappedState(state_cp);
     wali::IMergeFn* mf = new MergeFunction(global_voc1, ret_key_callee, ret_key_caller, new AvSemiring(state_cp_bpw.get_ptr(), getName(cs.getInstruction()), getName((BasicBlock*)cs.getCalledFunction()->begin())));
 
     return mf;
@@ -444,7 +449,7 @@ namespace llvm_abstract_transformer {
       WrappedDomain_Int arg_val = getOperandValue(*argit);
       WrappedDomain_Int one = arg_val.of_const(1);
 
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> assume_cond = arg_val.abs_equal(one);
+      ref_ptr<BitpreciseWrappedAbstractValue> assume_cond = arg_val.abs_equal(one);
       Meet(assume_cond);
     }
   }
@@ -542,15 +547,15 @@ namespace llvm_abstract_transformer {
 
     // Handle special case when both operands are bool and the operator is a boolean op
     DimensionKey k;
-    bool op0_handled_dim = CreateDimensionFromValue("inst", I.getOperand(0), k, CBTI_INT64(1));
+    bool op0_handled_dim = CreateDimensionFromValue("inst", I.getOperand(0), k, Version(1));
     if(op0_handled_dim && (GetBitsizeFromType(Ty) == utils::one)) {
       bool inboolstore = false;
-      std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > b0 = GetBoolValue(I.getOperand(0), inboolstore);
+      std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > b0 = GetBoolValue(I.getOperand(0), inboolstore);
       if(inboolstore) {
-        std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > b1 = GetBoolValue(I.getOperand(1), inboolstore);
+        std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > b1 = GetBoolValue(I.getOperand(1), inboolstore);
         if(inboolstore) {
           bool bool_op = true;
-          std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > R;
+          std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > R;
           switch (I.getOpcode()) {
           default:
             bool_op = false;
@@ -626,9 +631,9 @@ namespace llvm_abstract_transformer {
 
 
   /***************************** Handle ICMP instruction **************************************/
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_EQ(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -638,9 +643,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_NE(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -650,9 +655,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_ULT(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
 
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(false/*is_signed*/);
@@ -663,9 +668,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_SLT(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -675,9 +680,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_UGT(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(false/*is_signed*/);
     Src2.wrap(false/*is_signed*/);
@@ -687,9 +692,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_SGT(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -699,9 +704,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_ULE(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(false/*is_signed*/);
     Src2.wrap(false/*is_signed*/);
@@ -711,9 +716,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_SLE(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -723,9 +728,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_UGE(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(false/*is_signed*/);
     Src2.wrap(false/*is_signed*/);
@@ -735,9 +740,9 @@ namespace llvm_abstract_transformer {
     return ret;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteICMP_SGE(WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > ret;
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > ret;
     // Avoid multiple calls to wrap, only added for performance
     Src1.wrap(true/*is_signed*/);
     Src2.wrap(true/*is_signed*/);
@@ -752,7 +757,7 @@ namespace llvm_abstract_transformer {
     Type *Ty    = I.getOperand(0)->getType();
     WrappedDomain_Int Src1 = getOperandValue(I.getOperand(0));
     WrappedDomain_Int Src2 = getOperandValue(I.getOperand(1));
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > R;   // Result
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > R;   // Result
   
     switch (I.getPredicate()) {
     case ICmpInst::ICMP_EQ:  R = abstractExecuteICMP_EQ(Src1,  Src2, Ty); break;
@@ -786,123 +791,123 @@ namespace llvm_abstract_transformer {
   /***************************** End ICMP instruction **************************************/
 
   /***************************** Execute FCMP instruction **************************************/
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_OEQ(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_ONE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_OLE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_OGE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_OLT(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_OGT(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_UEQ(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_UNE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_ULE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_UGE(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_ULT(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_UGT(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_ORD(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_UNO(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                           Type *Ty) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteFCMP_BOOL(WrappedDomain_Int Src1, WrappedDomain_Int Src2,
                            Type *Ty, bool is_false) {
     // Cannot handle floating point instructions. Return pair top, top
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
+    ref_ptr<BitpreciseWrappedAbstractValue> top = Src1.get_one_voc_relation();
     return std::make_pair(top, top);
   }
 
@@ -910,7 +915,7 @@ namespace llvm_abstract_transformer {
     Type *Ty    = I.getOperand(0)->getType();
     WrappedDomain_Int Src1 = getOperandValue(I.getOperand(0));
     WrappedDomain_Int Src2 = getOperandValue(I.getOperand(1));
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > R;   // Result
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > R;   // Result
   
     switch (I.getPredicate()) {
     default:
@@ -1029,9 +1034,9 @@ namespace llvm_abstract_transformer {
   // Return Top because our domain at the moment cannot deal with trunc instruction
   WrappedDomain_Int WrappedDomainBBAbsTransCreator::abstractExecuteTrunc(Value *SrcVal, Type *DstTy) const {
     DimensionKey dst_k;
-    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, CBTI_INT64(0));
+    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, Version(0));
     if(isdim) {
-      utils::Bitsize bitsize = abstract_domain::GetBitsize(dst_k);
+      utils::Bitsize bitsize = dst_k.GetBitsize();
       WrappedDomain_Int Src = getOperandValue(SrcVal);
       return Src.trunc(bitsize);
     }
@@ -1041,13 +1046,13 @@ namespace llvm_abstract_transformer {
 
   WrappedDomain_Int WrappedDomainBBAbsTransCreator::abstractExecuteSExt(Value *SrcVal, Type *DstTy) const {
     DimensionKey dst_k;
-    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, CBTI_INT64(0));
+    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, Version(0));
     if(isdim) {
-      utils::Bitsize bitsize = abstract_domain::GetBitsize(dst_k);
+      utils::Bitsize bitsize = dst_k.GetBitsize();
 
       // Handle special case when SrcVal is a bool value
       bool inboolstore = false;
-      std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > bool_val = GetBoolValue(SrcVal, inboolstore);
+      std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > bool_val = GetBoolValue(SrcVal, inboolstore);
       if(inboolstore) {
         return GetBoolValueAsBitsize(bool_val, bitsize);
       }
@@ -1063,13 +1068,13 @@ namespace llvm_abstract_transformer {
   // Return Top because our domain at the moment cannot deal with zero extension
   WrappedDomain_Int WrappedDomainBBAbsTransCreator::abstractExecuteZExt(Value *SrcVal, Type *DstTy) const {
     DimensionKey dst_k;
-    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, CBTI_INT64(0));
+    bool isdim = CreateDimensionFromType("temp", DstTy, dst_k, Version(0));
     if(isdim) {
-      utils::Bitsize bitsize = abstract_domain::GetBitsize(dst_k);
+      utils::Bitsize bitsize = dst_k.GetBitsize();
 
       // Handle special case when SrcVal is a bool value
       bool inboolstore = false;
-      std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > bool_val = GetBoolValue(SrcVal, inboolstore);
+      std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > bool_val = GetBoolValue(SrcVal, inboolstore);
       if(inboolstore) {
         return GetBoolValueAsBitsize(bool_val, bitsize);
       }
@@ -1138,15 +1143,15 @@ namespace llvm_abstract_transformer {
     return Ret;
   }
 
-  WrappedDomain_Int WrappedDomainBBAbsTransCreator::abstractExecuteSelect(std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > Src1, WrappedDomain_Int Src2, WrappedDomain_Int Src3, const Type *Ty) const {
+  WrappedDomain_Int WrappedDomainBBAbsTransCreator::abstractExecuteSelect(std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > Src1, WrappedDomain_Int Src2, WrappedDomain_Int Src3, const Type *Ty) const {
     if(Ty->isVectorTy()) {
       // Cannot handle vectors with any precison
     } else {
       WrappedDomain_Int zero_int = WrappedDomain_Int(GetBitsizeFromType(Ty), av_prevoc_).of_const(0);
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> tr = Src1.first;
+      ref_ptr<BitpreciseWrappedAbstractValue> tr = Src1.first;
       WrappedDomain_Int tr_int = WrappedDomain_Int::of_relation(tr, GetBitsizeFromType(Ty));
 
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> fl = Src1.second;
+      ref_ptr<BitpreciseWrappedAbstractValue> fl = Src1.second;
       WrappedDomain_Int fl_int = WrappedDomain_Int::of_relation(fl, GetBitsizeFromType(Ty));
 
       WrappedDomain_Int tr_and_Src2 = tr_int;
@@ -1169,10 +1174,10 @@ namespace llvm_abstract_transformer {
       // Cannot handle vectors with any precison
     } else {
       WrappedDomain_Int zero_int = WrappedDomain_Int(GetBitsizeFromType(Ty), av_prevoc_).of_const(0);
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> is_zero = Src1.abs_equal(zero_int);
+      ref_ptr<BitpreciseWrappedAbstractValue> is_zero = Src1.abs_equal(zero_int);
       WrappedDomain_Int is_zero_int = WrappedDomain_Int::of_relation(is_zero, GetBitsizeFromType(Ty));
 
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> is_nonzero = Src1.abs_not_equal(zero_int);
+      ref_ptr<BitpreciseWrappedAbstractValue> is_nonzero = Src1.abs_not_equal(zero_int);
       WrappedDomain_Int is_nonzero_int = WrappedDomain_Int::of_relation(is_nonzero, GetBitsizeFromType(Ty));
 
       WrappedDomain_Int is_zero_and_Src3 = is_zero_int;
@@ -1247,7 +1252,7 @@ namespace llvm_abstract_transformer {
 
     // Try if operand 0 has a conditional abstract value as a pair of abstract value
     bool found = false;
-    std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > abs_cond = GetBoolValue(I.getOperand(0), found);
+    std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > abs_cond = GetBoolValue(I.getOperand(0), found);
 
 
     // If found we can be more precise
@@ -1381,7 +1386,7 @@ namespace llvm_abstract_transformer {
     DEBUG_PRINTING(DBG_PRINT_EVERYTHING,
                    print(std::cout << "\nstate_ before havoc:");
                    abstract_domain::print(std::cout << "\nk_prime_voc:", k_prime_voc););
-    state_ = dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(state_->Havoc(k_prime_voc).get_ptr());
+    state_ = static_cast<BitpreciseWrappedAbstractValue*>(state_->Havoc(k_prime_voc).get_ptr());
     Vocabulary state_voc = state_->GetVocabulary();
     DEBUG_PRINTING(DBG_PRINT_EVERYTHING,
                    print(std::cout << "\nstate_ after havoc:"););
@@ -1391,7 +1396,7 @@ namespace llvm_abstract_transformer {
       abstract_domain::print(std::cout << "\nstate_voc:", state_voc);
       //assert(false);
     } else {
-      ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> ret_var 
+      ref_ptr<BitpreciseWrappedAbstractValue> ret_var
         = IntVal.assign_to_two_voc(k_prime, state_->GetVocabulary());
       DEBUG_PRINTING(DBG_PRINT_EVERYTHING,
                      ret_var->print(std::cout << "\nret_var:");
@@ -1431,7 +1436,7 @@ namespace llvm_abstract_transformer {
   }
 
   // Perform vanilla meet of state with val 
-  void WrappedDomainBBAbsTransCreator::Meet(const ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>& val) {
+  void WrappedDomainBBAbsTransCreator::Meet(const ref_ptr<BitpreciseWrappedAbstractValue>& val) {
     state_->VanillaMeet(val.get_ptr());
   }
 
@@ -1443,15 +1448,15 @@ namespace llvm_abstract_transformer {
       return it->second;
     }
     
-    ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> top = 
-      new abstract_value::BitpreciseWrappedAbstractValue
+    ref_ptr<BitpreciseWrappedAbstractValue> top =
+      new BitpreciseWrappedAbstractValue
       (av_prevoc_->Copy(), 
-       abstract_value::BitpreciseWrappedAbstractValue::VocabularySignedness());
+       BitpreciseWrappedAbstractValue::VocabularySignedness());
 
     // Check if the cond is a bool type, set found to false and return top
     DimensionKey cond_k;
-    bool isdim = CreateDimensionFromType("temp", Cond->getType(), cond_k, CBTI_INT64(0));
-    if(isdim && (abstract_domain::GetBitsize(cond_k) == utils::one)) {
+    bool isdim = CreateDimensionFromType("temp", Cond->getType(), cond_k, Version(0));
+    if(isdim && (cond_k.GetBitsize() == utils::one)) {
       // Check for simple constants true and false
       if(User* U = dyn_cast<User>(Cond)) {
         if(Constant* C = dyn_cast<Constant>(U)) {
@@ -1470,8 +1475,8 @@ namespace llvm_abstract_transformer {
                 if(Result.is_constant(val)) {
                   std::cout << "\nResult is constant:" << val;
                   found = true;
-                  ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> bot = 
-                    dynamic_cast<abstract_value::BitpreciseWrappedAbstractValue*>(top->Bottom().get_ptr());
+                  ref_ptr<BitpreciseWrappedAbstractValue> bot =
+                    static_cast<BitpreciseWrappedAbstractValue*>(top->Bottom().get_ptr());
                   if(val == 1)
                     return std::make_pair(top, bot);
                   else if(val == 0)
@@ -1506,7 +1511,7 @@ namespace llvm_abstract_transformer {
     return oneval;
   }
 
-  std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> >
+  std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> >
   abstractExecuteCmp(unsigned predicate, WrappedDomain_Int& Src1, WrappedDomain_Int& Src2, Type *Ty) {
     switch (predicate) {
     case ICmpInst::ICMP_EQ:    return abstractExecuteICMP_EQ(Src1, Src2, Ty);
@@ -1606,7 +1611,7 @@ namespace llvm_abstract_transformer {
     case Instruction::ICmp: {
       WrappedDomain_Int op0 = getOperandValue(CE->getOperand(0));
       WrappedDomain_Int op1 = getOperandValue(CE->getOperand(1));
-      std::pair<ref_ptr<abstract_value::BitpreciseWrappedAbstractValue>, ref_ptr<abstract_value::BitpreciseWrappedAbstractValue> > cmp_val =
+      std::pair<ref_ptr<BitpreciseWrappedAbstractValue>, ref_ptr<BitpreciseWrappedAbstractValue> > cmp_val =
         abstractExecuteCmp(CE->getPredicate(),
                            op0,
                            op1,
@@ -1834,7 +1839,7 @@ namespace llvm_abstract_transformer {
       break;
 
     default:
-      UWAssert::shouldNeverHappen();
+      assert(false);
       //OS << "ERROR: Constant unimplemented for type: " << *C->getType();
     }
 

@@ -8,23 +8,25 @@ enum TVL_BOOL {
   ZERO,
   ONE,
   MAYBE
-}
+};
 
 // For now, the bitsize is assumed to be fixed and at thirty-two
 class WrappedDomain_Int {
-  typedef abstract_domain::BitpreciseWrappedAbstractValue BitpreciseWrappedAbstractValue;
-  typedef std::map<DimensionKey, bool> VocabularySignedness;
-  typedef abstract_domain::AbstractValue AbstractValue;
 public:
+  typedef abstract_domain::BitpreciseWrappedAbstractValue BitpreciseWrappedAbstractValue;
+  typedef abstract_domain::DimensionKey DimensionKey;
+  typedef abstract_domain::AbstractValue AbstractValue;
+  typedef abstract_domain::Vocabulary Vocabulary;
+  typedef std::map<DimensionKey, bool> VocabularySignedness;
   // ==========================
   // Constructor and Destructor
   // ==========================
   // by default, construct top.
-  explicit WrappedDomain_Int(unsigned numbits, const ref_ptr<AbstractValue>& av);
+  explicit WrappedDomain_Int(utils::Bitsize bitsize, const wali::ref_ptr<AbstractValue>& av);
   WrappedDomain_Int(const WrappedDomain_Int& that);
 
 private:
-  WrappedDomain_Int(ref_ptr<BitpreciseWrappedAbstractValue> av, DimensionKey k);
+  WrappedDomain_Int(wali::ref_ptr<BitpreciseWrappedAbstractValue> av, DimensionKey k);
 public:
   ~WrappedDomain_Int();
 
@@ -41,29 +43,29 @@ public:
 
   // of_relation: Make the WrappedDomain_Int holding the constraints in 'state',
   // without any constraints on the represented value.
-  static WrappedDomain_Int of_relation(const ref_ptr<BitpreciseWrappedAbstractValue>& state, utils::Bitsize b);
+  static WrappedDomain_Int of_relation(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& state, utils::Bitsize b);
 
-  static WrappedDomain_Int of_relation(const ref_ptr<BitpreciseWrappedAbstractValue>& state, utils::Bitsize b, Vocabulary prevoc);
+  static WrappedDomain_Int of_relation(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& state, utils::Bitsize b, Vocabulary prevoc);
 
   // of_variable: Make the Ks_Int holding the pre-state constraints of 'weight'
   // and representing variable 'var'.
   // ('weight' is assumed to be the 'rel' field of a Ks_Two_Voc element.)
-  static WrappedDomain_Int of_variable(const ref_ptr<BitpreciseWrappedAbstractValue>& weight, const DimensionKey& var);
+  static WrappedDomain_Int of_variable(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& weight, const DimensionKey& var);
 
-  static WrappedDomain_Int of_variable(const ref_ptr<BitpreciseWrappedAbstractValue>& weight, const DimensionKey& var, const Vocabulary& prevoc);
+  static WrappedDomain_Int of_variable(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& weight, const DimensionKey& var, const Vocabulary& prevoc);
 
   // =====================
   // Vocabulary Operations
   // =====================
   Vocabulary GetVocabulary() const;
-  ref_ptr<BitpreciseWrappedAbstractValue> get_one_voc_relation() const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> get_one_voc_relation() const;
 
   // Get the key represented by this Int
   DimensionKey GetIntKey() const;
 
   // assign_to: Return the Ks_Rel "var := this".
-  ref_ptr<BitpreciseWrappedAbstractValue> assign_to_one_voc(DimensionKey var) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> assign_to_two_voc(DimensionKey var, const Vocabulary& target_voc) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> assign_to_one_voc(DimensionKey var) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> assign_to_two_voc(DimensionKey var, const Vocabulary& target_voc) const;
 
   // =====================
   // Relational Operations
@@ -140,17 +142,17 @@ public:
   WrappedDomain_Int bitwise_not() const;
 
   // abs_equal: Return an abstract boolean representing "this == that".
-  ref_ptr<BitpreciseWrappedAbstractValue> abs_equal(const WrappedDomain_Int & that) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> abs_not_equal(const WrappedDomain_Int & that) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> less_than_signed(const WrappedDomain_Int & that) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> less_than_unsigned(const WrappedDomain_Int & that) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_signed(const WrappedDomain_Int & that) const;
-  ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_unsigned(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> abs_equal(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> abs_not_equal(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> less_than_signed(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> less_than_unsigned(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_signed(const WrappedDomain_Int & that) const;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_unsigned(const WrappedDomain_Int & that) const;
 
-  static ref_ptr<BitpreciseWrappedAbstractValue> boolean_and(const ref_ptr<BitpreciseWrappedAbstractValue>& b1, const ref_ptr<BitpreciseWrappedAbstractValue>& b2);
-  static ref_ptr<BitpreciseWrappedAbstractValue> boolean_or(const ref_ptr<BitpreciseWrappedAbstractValue>& b1, const ref_ptr<BitpreciseWrappedAbstractValue>& b2);
-  static ref_ptr<BitpreciseWrappedAbstractValue> boolean_xor(const ref_ptr<BitpreciseWrappedAbstractValue>& b1, const ref_ptr<BitpreciseWrappedAbstractValue>& b2);
-  static ref_ptr<BitpreciseWrappedAbstractValue> boolean_not(const ref_ptr<BitpreciseWrappedAbstractValue>& b1);
+  static wali::ref_ptr<BitpreciseWrappedAbstractValue> boolean_and(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1, const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b2);
+  static wali::ref_ptr<BitpreciseWrappedAbstractValue> boolean_or(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1, const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b2);
+  static wali::ref_ptr<BitpreciseWrappedAbstractValue> boolean_xor(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1, const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b2);
+  static wali::ref_ptr<BitpreciseWrappedAbstractValue> boolean_not(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1);
 
   // These operations are currently not supported as the only bitsize currently expressible is 32 bits
   WrappedDomain_Int zero_extend(utils::Bitsize b) const;
@@ -174,7 +176,7 @@ private:
 
   // These functions are used both by less_than and less_than_or_equal operations after they have perform wrapping
   // on their arguments. Note that this function can modify that and this
-  ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_no_wrapping(WrappedDomain_Int & that, bool is_signed);
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> less_than_or_equal_no_wrapping(WrappedDomain_Int & that, bool is_signed);
   WrappedDomain_Int div_helper(const mpz_class& that, bool is_signed) const;
   WrappedDomain_Int mod_helper(const mpz_class& that, bool is_signed) const;
 
@@ -182,7 +184,7 @@ private:
   DimensionKey k_;
   bool wrapped_;
   bool wrapped_is_signed_;
-  ref_ptr<BitpreciseWrappedAbstractValue> wav_;
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> wav_;
 };
 
 #endif // src_reinterp_wrapped_domain_WrappedDomain_Int_hpp

@@ -71,6 +71,7 @@ public:
 
   // In-place reduction
   virtual void Reduce() = 0;
+  virtual void Reduce(const ref_ptr<AbstractValue>& that) = 0;
 
   // project: project onto Vocabulary v. 
   virtual void Project         (const Vocabulary & v) = 0;
@@ -130,9 +131,9 @@ public:
   // This is an overapproximation.
   // TODO: Change it to use quadratic number of havoc calls to determine
   // the minimum vocabulary that key k depends on
-  virtual Vocabulary GetDependentVocabulary(DimensionKey& k, Version ver) const {
-    return getVocabularySubset(GetDependentVocabulary(k), ver);
-  }
+  // virtual Vocabulary GetDependentVocabulary(DimensionKey& k, Version ver) const {
+  //   return getVocabularySubset(GetDependentVocabulary(k), ver);
+  // }
 
   virtual Vocabulary GetDependentVocabulary(DimensionKey& k) const = 0;
   /*******************************************************************************************************/
