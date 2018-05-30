@@ -32,7 +32,9 @@ These steps will install all the external dependencies to the $(SBD_DIR)/externa
    2) cd googletest/googletest/make && make
    - This packages is optional and used only for the unittests.
 
-5) boost:  tar -xvf boost_1_61_0.tar.bz2
+5) boost:
+   1) Download boost_1_61_0.tar.bz2 to the external repository.
+   2) tar -xvf boost_1_61_0.tar.bz2
 
 6) WALi:
    1) In the external folder, git clone https://github.com/WaliDev/WALi-OpenNWA.git

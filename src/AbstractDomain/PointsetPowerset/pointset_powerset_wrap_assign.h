@@ -1,7 +1,7 @@
 #ifndef src_AbstractDomain_PointsetPowerset_pointset_powerset_wrap_assign_h
 #define src_AbstractDomain_PointsetPowerset_pointset_powerset_wrap_assign_h
 
-#include "external/ppl-1.1/src/wrap_assign.hh"
+#include "ppl.hh"
 #include "utils/debug/DebugOptions.hpp"
 
 // This file borrows implementation of external/ppl-1.1/src/wrap_assign.hh to 

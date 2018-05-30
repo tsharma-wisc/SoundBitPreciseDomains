@@ -1,7 +1,6 @@
-#include "pointset_powerset/pointset_powerset_av.hpp"
+#include "pointset_powerset_av.hpp"
 
-#include "external/ppl-1.1/src/C_Polyhedron_defs.hh"
-#include "external/ppl-1.1/src/Octagonal_Shape_defs.hh"
+#include "ppl.hh"
 
 class Octagonal_Shape_Certificate {
 public:
@@ -94,7 +93,7 @@ namespace abstract_domain
   template <>
   void PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron>::WidenHomogeneous (const ref_ptr<AbstractValue> & that_av) {
     typedef Parma_Polyhedra_Library::BHRZ03_Certificate T1;
-    const PointsetPowersetAv* that = dynamic_cast<const PointsetPowersetAv *>(that_av.get_ptr());
+    const PointsetPowersetAv* that = static_cast<const PointsetPowersetAv *>(that_av.get_ptr());
     typename Parma_Polyhedra_Library::Widening_Function<Parma_Polyhedra_Library::Polyhedron> widen_fun = 
       Parma_Polyhedra_Library::widen_fun_ref(&Parma_Polyhedra_Library::Polyhedron::BHRZ03_widening_assign);
 
@@ -114,7 +113,7 @@ namespace abstract_domain
   template <>
   void PointsetPowersetAv<Parma_Polyhedra_Library::Octagonal_Shape<mpz_class> >::WidenHomogeneous (const ref_ptr<AbstractValue> & that_av) {
     typedef Octagonal_Shape_Certificate T1;
-    const PointsetPowersetAv* that = dynamic_cast<const PointsetPowersetAv *>(that_av.get_ptr());
+    const PointsetPowersetAv* that = static_cast<const PointsetPowersetAv *>(that_av.get_ptr());
     typename Parma_Polyhedra_Library::Widening_Function<Parma_Polyhedra_Library::Octagonal_Shape<mpz_class> > 
       widen_fun = Parma_Polyhedra_Library::widen_fun_ref(&Parma_Polyhedra_Library::Octagonal_Shape<mpz_class>::widening_assign);
 
@@ -211,7 +210,7 @@ namespace abstract_domain
     utils::Timer reduce_timer("Reduce:", std::cout, false);
     DEBUG_PRINTING(DBG_PRINT_DETAILS, std::cout << "\nIn reduce:";);
     ref_ptr<abstract_domain::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav = 
-      dynamic_cast<abstract_domain::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(that.get_ptr());
+      static_cast<abstract_domain::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(that.get_ptr());
     if(eqav != NULL && eqav->equalities_only()) {
       assert(eqav->num_disjuncts() == 1u);
       const Parma_Polyhedra_Library::C_Polyhedron eqs = eqav->GetDisjunct(0);

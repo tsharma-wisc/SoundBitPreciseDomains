@@ -2,14 +2,11 @@
 #define src_AbstractDomain_PointsetPowerset_pointset_powerset_av_impl_hpp
 
 #include "pointset_powerset_av.hpp"
-#include "src/AbstractDomain/PointsetPowerset/pointset_powerset_wrap_assign.h"
+#include "pointset_powerset_wrap_assign.h"
 #include "utils/timer/timer.hpp"
 #include <algorithm>
 #include <sstream>
 #include <memory>
-
-#include "external/ppl-1.1/src/assert.hh"
-
 
 // By default, max_disjunctions is 1, hence this class behaves like normal polyhedron
 template <typename PSET>
@@ -74,7 +71,7 @@ namespace abstract_domain
   // Equality operations
   template <typename PSET>
   inline bool PointsetPowersetAv<PSET>::operator==  (const AbstractValue& that) const {
-    const PointsetPowersetAv* that_p = dynamic_cast<const PointsetPowersetAv*>(&that);
+    const PointsetPowersetAv* that_p = static_cast<const PointsetPowersetAv*>(&that);
     assert(equalities_only_ == that_p->equalities_only_);
     return (*this == *that_p);
   }
@@ -92,7 +89,7 @@ namespace abstract_domain
 
   template <typename PSET>
   inline bool PointsetPowersetAv<PSET>::Overapproximates(const ref_ptr<AbstractValue>& that) const {
-    const ref_ptr<PointsetPowersetAv> that_pp = dynamic_cast<PointsetPowersetAv *>(that.get_ptr());
+    const ref_ptr<PointsetPowersetAv> that_pp = static_cast<PointsetPowersetAv *>(that.get_ptr());
     assert(equalities_only_ == that_pp->equalities_only_);
     return pp_.contains(that_pp->pp_);
   }
@@ -111,13 +108,13 @@ namespace abstract_domain
   // Since poly domain can be infinite this operation does not make sense. Hence the assert.
   template <typename PSET>
   unsigned PointsetPowersetAv<PSET>::GetHeight () const {
-    UWAssert::shouldNeverHappen();
+    assert(false);
     return 0;
   }
 
   template <typename PSET>
   void PointsetPowersetAv<PSET>::Join (const ref_ptr<AbstractValue> & that) {
-    ref_ptr<PointsetPowersetAv> that_pp = dynamic_cast<PointsetPowersetAv *>(that.get_ptr());
+    ref_ptr<PointsetPowersetAv> that_pp = static_cast<PointsetPowersetAv *>(that.get_ptr());
     assert(equalities_only_ == that_pp->equalities_only_);
     raw_join(that_pp);
   }
@@ -145,7 +142,7 @@ namespace abstract_domain
   template <typename PSET>
   void PointsetPowersetAv<PSET>::Meet(const ref_ptr<AbstractValue> & that) {
     utils::Timer timer("PointsetPowersetAv meet", std::cout, false);
-    ref_ptr<PointsetPowersetAv> that_pp = dynamic_cast<PointsetPowersetAv *>(that.get_ptr());
+    ref_ptr<PointsetPowersetAv> that_pp = static_cast<PointsetPowersetAv *>(that.get_ptr());
     assert(equalities_only_ == that_pp->equalities_only_);
 
     AddVocabulary(that->GetVocabulary());
@@ -191,10 +188,10 @@ namespace abstract_domain
 
   template <typename PSET>
   void PointsetPowersetAv<PSET>::WidenHomogeneous (const ref_ptr<AbstractValue> & that_av) {
-    UWAssert::shouldNeverHappen();
+   assert(false);
     // typedef Parma_Polyhedra_Library::BHRZ03_Certificate T1;
     // typedef typename Parma_Polyhedra_Library::Widening_Function<PSET> T2;
-    // ref_ptr<PointsetPowersetAv> that = dynamic_cast<PointsetPowersetAv *>(that_av.get_ptr());
+    // ref_ptr<PointsetPowersetAv> that = static_cast<PointsetPowersetAv *>(that_av.get_ptr());
     // T1 cert;
     // T2 widen_fun = Parma_Polyhedra_Library::widen_fun_ref(&PSET::widening_assign);
     // pp_.BHZ03_widening_assign(that->pp_, widen_fun);
@@ -308,7 +305,7 @@ namespace abstract_domain
   template <typename PSET>
   bool PointsetPowersetAv<PSET>::IsConstant(mpz_class& val) const {
     // Assume that the vocabulary size is 1
-    UWAssert::shouldNeverHappen(this->GetVocabulary().size() != 1);
+    assert(this->GetVocabulary().size() == 1);
 
     if(pp_.size() != 1)
       return false;
@@ -537,12 +534,12 @@ namespace abstract_domain
         // If the key is not found it must be in the added_voc. Hence, determine it's location by
         // picking up one of the new added dimensions added in the poly_.
         from = old_poly_space_dims + GetPplDimensionTypeFromDimensionKey(key_index_bimap_added_voc, *voc_it, found);
-        UWAssert::shouldNeverHappen(!found);
+        assert(found);
         num_new_dims_mapped++;
       }
 
       ppl_dimension_type to = GetPplDimensionTypeFromDimensionKey(key_index_bimap_union, *voc_it, found);
-      UWAssert::shouldNeverHappen(!found);
+      assert(found);
 
       permutation.insert(from, to);
     }
@@ -575,9 +572,9 @@ namespace abstract_domain
       {
         bool found;
         ppl_dimension_type from = GetPplDimensionTypeFromDimensionKey(key_index_bimap_, *voc_it, found);
-        UWAssert::shouldNeverHappen(!found);
+        assert(found);
         ppl_dimension_type to = GetPplDimensionTypeFromDimensionKey(new_key_index_bimap, m[*voc_it], found) ;
-        UWAssert::shouldNeverHappen(!found);
+        assert(found);
         permutation.insert(from, to);
       }
 
@@ -633,7 +630,7 @@ namespace abstract_domain
 
   template <typename PSET>
   Parma_Polyhedra_Library::dimension_type PointsetPowersetAv<PSET>::GetPplDimensionTypeFromDimensionKey(const DimensionKey& k) const {
-    UWAssert::shouldNeverHappen(key_index_bimap_.size() != this->voc_.size());
+    assert(key_index_bimap_.size() == this->voc_.size());
     bool found;
     ppl_dimension_type ret = GetPplDimensionTypeFromDimensionKey(key_index_bimap_, k, found);
     if(!found) {
@@ -666,10 +663,10 @@ namespace abstract_domain
   template <typename PSET>
   DimensionKey PointsetPowersetAv<PSET>::GetDimensionKeyAtPplDimensionType(const Parma_Polyhedra_Library::dimension_type& index) const
   {
-    UWAssert::shouldNeverHappen(key_index_bimap_.size() != this->voc_.size());
+    assert(key_index_bimap_.size() == this->voc_.size());
     bool found;
     DimensionKey ret = GetDimensionKeyAtPplDimensionType(key_index_bimap_, index, found);
-    UWAssert::shouldNeverHappen(!found);
+    assert(found);
     return ret;
   }
 
@@ -710,7 +707,7 @@ namespace abstract_domain
     case utils::eight:
       return Parma_Polyhedra_Library::BITS_8;
     default:
-      UWAssert::shouldNeverHappen();
+      assert(false);
     }
 
     return Parma_Polyhedra_Library::BITS_32;
@@ -818,7 +815,7 @@ namespace abstract_domain
         bool d1_inf = itv1.lower_is_boundary_infinity();
         mpz_class d1;
         if(!d1_inf) {
-          UWAssert::shouldNeverHappen(itv2.upper_is_boundary_infinity());
+          assert(!itv2.upper_is_boundary_infinity());
           d1 = itv1.lower() - itv2.upper();
           if(d1 < 0) d1 = -d1;
         }
@@ -826,7 +823,7 @@ namespace abstract_domain
         bool d2_inf = itv2.lower_is_boundary_infinity();
         mpz_class d2;
         if(!d2_inf) {
-          UWAssert::shouldNeverHappen(itv1.upper_is_boundary_infinity());
+          assert(!itv1.upper_is_boundary_infinity());
           d2 = itv2.lower() - itv1.upper();
           if(d2 < 0) d2 = -d2;
         }
@@ -894,11 +891,11 @@ namespace abstract_domain
 
       // Remove these two values from pp_copy
       typename std::vector<std::shared_ptr<PSET> >::iterator ps1_pos = std::find(pp_copy.begin(), pp_copy.end(), ps1);
-      UWAssert::shouldNeverHappen(ps1_pos == pp_copy.end());
+      assert(ps1_pos != pp_copy.end());
       pp_copy.erase(ps1_pos);
 
       typename std::vector<std::shared_ptr<PSET> >::iterator ps2_pos = std::find(pp_copy.begin(), pp_copy.end(), ps2);
-      UWAssert::shouldNeverHappen(ps2_pos == pp_copy.end());
+      assert(ps2_pos != pp_copy.end());
       pp_copy.erase(ps2_pos);
 
       // Remove all those values in dist_func which have either ps1 or ps2 in them

@@ -4,12 +4,11 @@
 #include <algorithm>
 #include <sstream>
 
-#include "AbstractValue.hpp"
-#include "external/ppl-1.1/src/ppl_header.hh"
-#include "external/ppl-1.1/src/Pointset_Powerset_defs.hh"
+#include "src/AbstractDomain/common/AbstractValue.hpp"
+#include "ppl.hh"
 
 #include "utils/debug/DebugOptions.hpp"
-#include "external/boost/boost/bimap.hpp"
+#include "boost/bimap.hpp"
 
 namespace abstract_domain
 {
