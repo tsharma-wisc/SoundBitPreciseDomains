@@ -8,7 +8,7 @@ These steps will install all the external dependencies to the $(SBD_DIR)/externa
    2) mv clang llvm/tools
    3) mkdir build && cd build
    4) ../llvm/configure --prefix=$(SBD_DIR)/external
-   5) Finally, make ENABLE_RTTI=1 -j <num_cpus>; make install
+   5) Finally, REQUIRES_RTTI=1 make -j <num_cpus>; make install
       (Building with RTTI is crucial to run SBD project as it heavily uses dynamic casts.)
    
 2) Z3:

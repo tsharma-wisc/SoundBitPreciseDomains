@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "analysis.hpp"
-#include "utils/debug/DebugOptions.hpp"
 
 bool cmdlineparam_use_oct = false;
 bool cmdlineparam_use_red_prod = false;

@@ -274,12 +274,11 @@ void WrappedDomainWPDSCreator::AddDelta2RuleToPds(ref_ptr<AbstractValue> state_c
                  "," << wali::key2str(callee_entry_key) << " " << wali::key2str(to_key) << ") is :";);
   DEBUG_PRINTING(DBG_PRINT_OVERVIEW, w_delta2->print(std::cout) << std::endl;);
   
-  if(is_fwpds_) {
+  wali::wpds::ewpds::EWPDS* ewpds = dynamic_cast<wali::wpds::ewpds::EWPDS*>(pds_);
+  if(ewpds) {
+    ewpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf); } else {
     wali::wpds::fwpds::FWPDS* fwpds = static_cast<wali::wpds::fwpds::FWPDS*>(pds_);
     fwpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
-  } else {
-    wali::wpds::ewpds::EWPDS* ewpds = static_cast<wali::wpds::ewpds::EWPDS*>(pds_);  
-    ewpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
   }
   UpdateMinMaxVocabularySize(w_delta2->GetAbstractValue()->GetVocabulary().size());
 }

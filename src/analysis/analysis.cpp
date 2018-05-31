@@ -7,12 +7,16 @@
 #include <memory>
 
 #include "analysis.hpp"
-#include "llvm.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/IRReader/IRReader.h"
 
-#include "src/reinterp/WrappedDomainWPDSCreator.hpp"
-#include "src/abstract_domain/pointset_powerset/pointset_powerset_av.hpp"
-#include "src/abstract_domain/common/ReducedProductAbsVal.hpp"
-#include "src/abstract_domain/common/BitpreciseWrappedAbstractValue.hpp"
+#include "src/AbstractDomain/common/ReducedProductAbsVal.hpp"
+#include "src/AbstractDomain/common/BitpreciseWrappedAbstractValue.hpp"
+#include "src/AbstractDomain/PointsetPowerset/pointset_powerset_av.hpp"
+#include "src/reinterp/wrapped_domain/WrappedDomainWPDSCreator.hpp"
 
 #include "utils/timer/timer.hpp"
 #include "wali/wfa/State.hpp"
@@ -28,8 +32,9 @@
 #include "wali/witness/WitnessMerge.hpp"
 #include "wali/witness/WitnessMergeFn.hpp"
 
-typedef abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::Octagonal_Shape<mpz_class> > PP_OCT_AV;
-typedef abstract_value::PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> PP_CPOLY_AV;
+using namespace abstract_domain;
+typedef PointsetPowersetAv<Parma_Polyhedra_Library::Octagonal_Shape<mpz_class> > PP_OCT_AV;
+typedef PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> PP_CPOLY_AV;
 
 using namespace llvm;
 
@@ -421,7 +426,8 @@ namespace wali {
           if(merge->hasRule())
             rule = evaluate(merge->rule().get_ptr());
 
-          witness::witness_merge_fn_t witness_merge_fn = merge->merge_fn();
+          witness::witness_merge_fn_t witness_merge_fn; // = merge->merge_fn();
+          assert("Wali doesn't support this operation" && false);
           merge_fn_t merge_fn = witness_merge_fn->get_user_merge();
           result = merge_fn->apply_f(caller, callee);
           return result;
@@ -477,10 +483,10 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   Vocabulary dum_voc;
   dum_voc.insert(DimensionKey(std::string("tmp"), 0, utils::thirty_two));
 
-  abstract_value::BitpreciseWrappedAbstractValue::disable_wrapping = cmdlineparam_disable_wrapping;
+  BitpreciseWrappedAbstractValue::disable_wrapping = cmdlineparam_disable_wrapping;
   // Use pointset powerset of octagon or polyhedra domain to perform analysis
   std::cout << "\nUsing the base domain of ";
-  ref_ptr<abstract_value::AbstractValue> av; 
+  ref_ptr<AbstractValue> av; 
   if(cmdlineparam_use_red_prod) {
     if(cmdlineparam_use_oct) {
       std::cout << "ReducedProduct<octagons, Equalities>";
@@ -488,7 +494,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
       PP_OCT_AV::use_extrapolation = cmdlineparam_use_extrapolation;
       PP_CPOLY_AV::max_disjunctions = 1; // equality domain is not allowed to use disjunctions
       PP_CPOLY_AV::use_extrapolation = cmdlineparam_use_extrapolation;
-      av = new abstract_value::ReducedProductAbsVal(new PP_OCT_AV(dum_voc), new PP_CPOLY_AV(dum_voc, true, true/*equalities_only*/));
+      av = new ReducedProductAbsVal(new PP_OCT_AV(dum_voc), new PP_CPOLY_AV(dum_voc, true, true/*equalities_only*/));
     } else {
       std::cout << "ReducedProduct not needed for polyhedra. Using polyhedra.";
       PP_CPOLY_AV::max_disjunctions = cmdlineparam_max_disjunctions;
