@@ -1,4 +1,4 @@
-TOP_DIR=../..
+TOP_DIR=$(CURDIR)/../..
 EXTERNAL_DIR=$(TOP_DIR)/external
 BOOST_DIR=$(EXTERNAL_DIR)/boost_1_61_0
 

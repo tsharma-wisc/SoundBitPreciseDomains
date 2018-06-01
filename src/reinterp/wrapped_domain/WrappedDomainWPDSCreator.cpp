@@ -183,10 +183,13 @@ BasicBlock::iterator WrappedDomainWPDSCreator::findNonModelCall(BasicBlock* bb, 
   BasicBlock::iterator end = bb->end();
   while(start != end) {
     Instruction* I = start;
-    if(CallInst::classof(I)) {
-      CallInst* c = static_cast<CallInst*>(I);
+    CallInst* c = dynamic_cast<CallInst*>(I);
+    if(c) {
       CallSite cs(c);
+      if(cs.getCalledFunction())
+        std::cout << "\ncs.getCalledFunction()->getName():" << cs.getCalledFunction()->getName().str();
       if(!isModel(cs.getCalledFunction())) {
+        std::cout << "\nIts not a model.";
         ci = c;
         start++;
         return start;
@@ -204,8 +207,8 @@ bool containsCallToTrap(BasicBlock* bb) {
   BasicBlock::iterator end = bb->end();
   while(start != end) {
     Instruction* I = start;
-    if(CallInst::classof(I)) {
-      CallInst* c = static_cast<CallInst*>(I);
+    CallInst* c = dynamic_cast<CallInst*>(I);
+    if(c) {
       CallSite cs(c);
       Function* cf = cs.getCalledFunction();
       if(cf && cf->getName() == "llvm.trap")
@@ -353,7 +356,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
     // Handle the case when the basic block b contains a call instruction
     if(ci != NULL) {
       llvm::CallSite CS(ci);
-      if(CS.getCalledFunction()->getName() != "__VERIFIER_assert") {
+      if(CS.getCalledFunction()->getName() != "__VERIFIER_assert" && CS.getCalledFunction()->getName() != "assert") {
         // Use merge function to add delta 2 transitions
         BasicBlock *callee_entry_bb = &(CS.getCalledFunction()->getEntryBlock());
         callee_entry_key = mk_wpds_key(callee_entry_bb->begin(), callee_entry_bb, CS.getCalledFunction());

@@ -3,7 +3,7 @@
 
 int analysis();
 
-extern const char* cmdlineparam_filename;
+extern std::string cmdlineparam_filename;
 extern unsigned cmdlineparam_max_disjunctions;
 extern bool cmdlineparam_disable_wrapping;
 extern bool cmdlineparam_use_oct;

@@ -360,7 +360,11 @@ namespace llvm_abstract_transformer {
   // Additionally, f is a model when it is null or when it is an indirect call.
   // Note that the __VERIFIER_assert is handled specially by WrappedDomainWPDSCreator
   bool WrappedDomainBBAbsTransCreator::isModel(const Function *f) const {
-    bool is_decl = (!f || (f && f->isDeclaration()));
+    if(!f)
+      return true;
+    if(f->getName() == "__VERIFIER_assert" || f->getName() == "assert")
+      return false;
+    bool is_decl = f->isDeclaration();
     if(is_decl)
       return true;
 
@@ -1877,23 +1881,28 @@ namespace llvm_abstract_transformer {
       ss << C.getLimitedValue();
       std::string C_64 = ss.str();
       mpz_class mpz_val(C_64);
-      return WrappedDomain_Int(utils::sixty_four, av_prevoc_).of_const(mpz_val);
+      WrappedDomain_Int wint(utils::sixty_four, av_prevoc_);
+      return wint.of_const(mpz_val);
     }
     case 32: {
       mpz_class mpz_val = (unsigned int)C.getLimitedValue();
-      return WrappedDomain_Int(utils::thirty_two, av_prevoc_).of_const(mpz_val);
+      WrappedDomain_Int wint(utils::thirty_two, av_prevoc_);
+      return wint.of_const(mpz_val);
     }
     case 16: {
       mpz_class mpz_val = (unsigned short)C.getLimitedValue();
-      return WrappedDomain_Int(utils::sixteen, av_prevoc_).of_const(mpz_val);
+      WrappedDomain_Int wint(utils::sixteen, av_prevoc_);
+      return wint.of_const(mpz_val);
     }
     case 8: {
       mpz_class mpz_val = (unsigned char)C.getLimitedValue();
-      return WrappedDomain_Int(utils::eight, av_prevoc_).of_const(mpz_val);
+      WrappedDomain_Int wint(utils::eight, av_prevoc_);
+      return wint.of_const(mpz_val);
     }
     case 1:
       mpz_class mpz_val = C.getBoolValue();
-      return WrappedDomain_Int(utils::one, av_prevoc_).of_const(mpz_val);
+      WrappedDomain_Int wint(utils::one, av_prevoc_);
+      return wint.of_const(mpz_val);
     }
     return WrappedDomain_Int(utils::thirty_two, av_prevoc_);
   }

@@ -2,6 +2,9 @@
 *.so
 *~
 *.a
+*.bc
+*.log
+*.out
 external/bin
 external/lib
 external/include

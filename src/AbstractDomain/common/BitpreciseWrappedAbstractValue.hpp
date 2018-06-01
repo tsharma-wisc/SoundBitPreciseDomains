@@ -56,7 +56,7 @@ public:
 
   virtual AbsValRefPtr Copy() const {
     ref_ptr<BitpreciseWrappedAbstractValue> cp = new BitpreciseWrappedAbstractValue(*this);
-    return cp.get_ptr();
+    return cp;
   }
 
   AbsValRefPtr av() const {
@@ -150,7 +150,7 @@ public:
 
   virtual bool IsTop () const {
     ref_ptr<BitpreciseWrappedAbstractValue> tp = new BitpreciseWrappedAbstractValue(av_->Top(), wrapped_voc_);
-    return Equal(tp.get_ptr());
+    return Equal(tp);
   }
   
   // Does this overapproximates that?
@@ -221,7 +221,7 @@ public:
   virtual bool ImplementsExtend() { return true;}
 
   ref_ptr<AbstractValue> Extend(const ref_ptr<AbstractValue> &op2) const { 
-    utils::Timer timer("\nBitpreciseWrappedAbstractValue Extend timer:", std::cout, true);
+    utils::Timer timer("\nBitpreciseWrappedAbstractValue Extend timer:", std::cout, false);
     DEBUG_PRINTING(DBG_PRINT_DETAILS, std::cout << "\nIn BitpreciseWrappedAbstractValue extend:";);
 
     std::map<Version, Version> map_0_to_1__1_to_2;

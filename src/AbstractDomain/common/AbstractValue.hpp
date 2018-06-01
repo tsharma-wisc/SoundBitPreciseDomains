@@ -137,12 +137,9 @@ public:
 
   virtual Vocabulary GetDependentVocabulary(DimensionKey& k) const = 0;
   /*******************************************************************************************************/
-
-  // Ref counting
-  ref_ptr<AbstractValue>::count_t count;
 protected:
-  // members
 
+  // members
   Vocabulary voc_;
 };
 

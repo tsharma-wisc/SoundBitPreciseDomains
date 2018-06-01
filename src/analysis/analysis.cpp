@@ -523,7 +523,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   std::cout << "\nWPDS construction time:" << wpds_construction_time;
 
   // Print PDS and its stats for debugging reasons
-  std::cout << "WPDS Statistics:" << std::endl;
+  std::cout << "\nWPDS Statistics:" << std::endl;
   pds->printStatistics(std::cout);
   std::cout << std::endl;
 
@@ -553,7 +553,7 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   // Collect stats on the module
   unsigned num_funcs = 0, num_bbs = 0, num_instrs = 0, num_call_sites = 0;
   for(Module::FunctionListType::iterator fit = cr.getModule()->getFunctionList().begin(); fit != cr.getModule()->getFunctionList().end(); fit++) {
-    if(fit->getName() != "_VERIFIER_assert" && !cr.isModel(fit)) {
+    if(fit->getName() != "_VERIFIER_assert" && fit->getName() != "assert" && !cr.isModel(fit)) {
       num_funcs++;
       for(Function::BasicBlockListType::iterator bbit = fit->getBasicBlockList().begin(); bbit != fit->getBasicBlockList().end(); bbit++) {
         num_bbs++;
@@ -838,7 +838,7 @@ int main(int argc, char* argv[])
       {"use_red_prod", no_argument, NULL, 'r'},
       {"use_fwpds", no_argument, NULL, 'w'},
       {"filename", required_argument, NULL, 'f'},
-      {"max_disjunctions", optional_argument, NULL, 'm'},
+      {"max_disjunctions", required_argument, NULL, 'm'},
       {"disable_wrapping", no_argument, NULL, 'u'},
       {"use_extrapolation", no_argument, NULL, 'e'},
       {"perform_narrowing", no_argument, NULL, 'n'},
@@ -847,7 +847,7 @@ int main(int argc, char* argv[])
       {"help", no_argument, NULL, 'h'},
       {0, 0, 0, 0}
     };
-  while ((c = getopt_long (argc, argv, "d:or:t:s:p:m:hd:w:uc", long_options, &option_index)) != -1) {
+  while ((c = getopt_long (argc, argv, "d:orwf:m:uenaph", long_options, &option_index)) != -1) {
     switch (c) {
     case 'd':
       debug_print_level = std::stoul(optarg);
@@ -862,7 +862,10 @@ int main(int argc, char* argv[])
       cmdlineparam_use_fwpds = true;
       break;
     case 'f':
-      cmdlineparam_filename = std::string(optarg).c_str();
+      has_input = true;
+      std::cout << "Processing filename:" << std::string(optarg) << "\n";
+      cmdlineparam_filename = std::string(optarg);
+      std::cout << "cmdlineparam_filename:" << cmdlineparam_filename << "\n";
       break;
     case 'm':
       cmdlineparam_max_disjunctions = std::stoul(optarg);
@@ -896,23 +899,26 @@ int main(int argc, char* argv[])
       }
       break;
     default:
-      std::cout << "ERROR while parsing program argument " << (char)c << std::endl;
+      std::cout << "ERROR while parsing program argument " << (char)c << "\n";
       return 1;
 	}
   }
   if (!has_input) {
-    std::cout << "ERROR while parsing program arguments" << std::endl;
+    std::cout << "ERROR while parsing program arguments.\n";
   }
 
-  std::cout << "\nParsing llvm bitcode as an llvm module.";
+  std::cout << "Parsing llvm bitcode as an llvm module.\n" << std::flush;
 
   LLVMContext &Context = getGlobalContext();
   SMDiagnostic Err;
 
   // Load the input module...
-  std::unique_ptr<Module> M = parseIRFile(cmdlineparam_filename, Err, Context);
+  StringRef cmdlineparam_filename_strref(cmdlineparam_filename.c_str());
+  std::cout << "cmdlineparam_filename_strref:" << cmdlineparam_filename_strref.str() << "\n";
+  std::unique_ptr<Module> M = parseIRFile(cmdlineparam_filename_strref, Err, Context);
 
   if (!M) {
+    std::cout << "Parsing the given file failed.\n";
     Err.print(argv[0], errs());
     return 1;
   }

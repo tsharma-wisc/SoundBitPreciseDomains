@@ -50,7 +50,7 @@ public:
 
   bool IsDistributive() const 
   {
-    return (first()->IsDistributive() && second()->IsDistributive());
+    return (first_->IsDistributive() && second_->IsDistributive());
   }
 
   // Other ways to create AbstractValue elements
@@ -68,7 +68,7 @@ public:
   virtual bool operator== (const BaseClass& other) const
   {
     const ReducedProductAbsVal *red_prd = downcast(other);
-    return first_->Equal(red_prd->first()) && second_->Equal(red_prd->second());
+    return first_->Equal(red_prd->first_) && second_->Equal(red_prd->second_);
   }
 
   virtual std::string ToString() const
@@ -103,22 +103,22 @@ public:
   virtual void Join(const AbsValRefPtr & other)
   {
     const ReducedProductAbsVal *red_prd = downcast(other);
-    first_->Join(red_prd->first());
-    second_->Join(red_prd->second());
+    first_->Join(red_prd->first_);
+    second_->Join(red_prd->second_);
   }
 
   virtual void JoinSingleton(const AbsValRefPtr & other)
   {
     const ReducedProductAbsVal *red_prd = downcast(other);
-    first_->JoinSingleton(red_prd->first());
-    second_->JoinSingleton(red_prd->second());
+    first_->JoinSingleton(red_prd->first_);
+    second_->JoinSingleton(red_prd->second_);
   }
 
   virtual void Meet(const AbsValRefPtr &other)
   {
     const ReducedProductAbsVal *red_prd = downcast(other);
-    first_->Meet(red_prd->first());
-    second_->Meet(red_prd->second());
+    first_->Meet(red_prd->first_);
+    second_->Meet(red_prd->second_);
     //Reduce();
   }
 
@@ -127,7 +127,7 @@ public:
   virtual bool Overapproximates(const AbsValRefPtr& other) const
   {
     const ReducedProductAbsVal *red_prd = downcast(other);
-    return first_->Overapproximates(red_prd->first()) &&  second_->Overapproximates(red_prd->second());
+    return first_->Overapproximates(red_prd->first_) &&  second_->Overapproximates(red_prd->second_);
 
   }
   // Add equality constraint
@@ -170,8 +170,8 @@ public:
     const ReducedProductAbsVal * that_red_prd = static_cast<const ReducedProductAbsVal *>(that.get_ptr());
     if (that_red_prd != NULL) {
       // Call Reduce on each component of "that"
-      this->Reduce (that_red_prd->first());
-      this->Reduce (that_red_prd->second());
+      this->Reduce (that_red_prd->first_);
+      this->Reduce (that_red_prd->second_);
     }  else {
       // That is a base domain
       first_->Reduce (that);

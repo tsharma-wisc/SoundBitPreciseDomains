@@ -41,13 +41,15 @@ WrappedDomain_Int& WrappedDomain_Int::operator=(const WrappedDomain_Int& that) {
 }
 
 WrappedDomain_Int WrappedDomain_Int::top() const {
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> tp = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Top().get_ptr());
-  return WrappedDomain_Int(tp, k_);
+  wali::ref_ptr<AbstractValue> tp = wav_->Top();
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> tp_bpwav = static_cast<BitpreciseWrappedAbstractValue*>(tp.get_ptr());
+  return WrappedDomain_Int(tp_bpwav, k_);
 }
 
 WrappedDomain_Int WrappedDomain_Int::bottom() const {
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> btm = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Bottom().get_ptr());
-  return WrappedDomain_Int(btm, k_);
+  wali::ref_ptr<AbstractValue> btm = wav_->Bottom();
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> btm_bpwav = static_cast<BitpreciseWrappedAbstractValue*>(btm.get_ptr());
+  return WrappedDomain_Int(btm_bpwav, k_);
 }
 
 WrappedDomain_Int WrappedDomain_Int::of_const(mpz_class c) const {

@@ -22,7 +22,7 @@ AvSemiring::~AvSemiring() {
 //        Regular         | Regular              | Regular (Call widen)
 //        Widening Weight | Regular (call widen) | Regular (call widen)
 sem_elem_t AvSemiring::combine(SemElem * op2_sem) {
-  utils::Timer timer("\nCombineTimer", std::cout, true);
+  utils::Timer timer("\nCombineTimer", std::cout, false);
   if(op2_sem == this)
     return this;
 
@@ -90,8 +90,7 @@ sem_elem_t AvSemiring::combine(SemElem * op2_sem) {
 //        Regular         | Regular         | Widening Weight
 //        Widening Weight | Widening Weight | Widening Weight
 sem_elem_t AvSemiring::extend(SemElem * op2_se) {
-  utils::Timer timer("\nExtendTimer", std::cout, true);
-
+  utils::Timer timer("\nExtendTimer", std::cout, false);
   DEBUG_PRINTING(DBG_PRINT_OPERATIONS, 
                  std::cout << "\n\nExtend called:" << std::endl;
                  print(std::cout << "this:") << std::endl;
@@ -178,7 +177,7 @@ sem_elem_t AvSemiring::quasi_one() const {
 }
 
 bool AvSemiring::isEqual(SemElem* op2) const {
-  utils::Timer timer("\nisEqualTimer", std::cout, true);
+  utils::Timer timer("\nisEqualTimer", std::cout, false);
   DEBUG_PRINTING(DBG_PRINT_OPERATIONS, 
                  std::cout << "\nEquality called:" << std::endl;
                  print(std::cout << "this:") << std::endl;

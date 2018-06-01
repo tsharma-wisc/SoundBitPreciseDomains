@@ -31,4 +31,4 @@ bool cmdlineparam_allow_phis = false;
 
 unsigned cmdlineparam_max_disjunctions = 1;
 
-const char* cmdlineparam_filename = "";
+std::string cmdlineparam_filename;
