@@ -58,9 +58,9 @@ After setting up the external dependencies,
 Running the analysis:
 1) Given a example file file.c, obtain the bitcode by the following command:
    external/bin/clang -c -O -emit-llvm file.c -o file.bc
-2) LD_LIBRARY_PATH="/nobackup/tsharma/SoundBitPreciseDomains/external/lib;/nobackup/tsharma/SoundBitPreciseDomains/lib" bin/bvsfdAnalysis --filename file.bc --max-disjunctions 1
+2) LD_LIBRARY_PATH="$(SBD_DIR)/external/lib;$(SBD_DIR)/lib" $(SBD_DIR)/bin/bvsfdAnalysis --filename file.bc --max_disjunctions 1
    (LD_LIBRARY_PATH needs to be set to find the libraries.
-3) LD_LIBRARY_PATH="/nobackup/tsharma/SoundBitPreciseDomains/external/lib;/nobackup/tsharma/SoundBitPreciseDomains/lib" bin/bvsfdAnalysis -h to get a list of options.
+3) LD_LIBRARY_PATH="$(SBD_DIR)/external/lib;$(SBD_DIR)/lib" $(SBD_DIR)/bin/bvsfdAnalysis -h to get a list of options.
   (Alternatively, you can use the src/analysis/test/sv-benchmarks/c/wrapped_domain_analysis.py script, it needs python3. The python script can run a whole benchmark using the -i option. See the scripts in src/analysis/test/sv-benchmarks/c for examples.)
 
 ----------------------------------------------------------------------------------------------------------------
