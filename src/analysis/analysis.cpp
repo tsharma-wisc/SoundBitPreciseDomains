@@ -768,12 +768,12 @@ void abstractInterp(std::unique_ptr<Module>& M, unsigned max_disjunctions, std::
   }
 
   double query_time = query_timer.elapsed();
-  std::cout << "query_time:" << query_time << std::endl;
-  std::cout << "\n\n\nTotal number of assertions:" << unreachable_keys.size();
+  std::cout << "\nquery_time:" << query_time << std::endl;
+  std::cout << "\n\nTotal number of assertions:" << unreachable_keys.size();
   std::cout << "\nTotal number of proved assertions:" << proved_unreachable_keys.size() << "\n";
 
   if(cmdlineparam_array_bounds_check) {
-    std::cout << "\n\n\nTotal number of array_bounds_check assertions:" << unreachable_array_bounds_check_keys.size();
+    std::cout << "\n\nTotal number of array_bounds_check assertions:" << unreachable_array_bounds_check_keys.size();
     std::cout << "\nTotal number of proved array_bounds_check assertions:" << proved_unreachable_array_bounds_check_keys.size() << "\n";
   }
 

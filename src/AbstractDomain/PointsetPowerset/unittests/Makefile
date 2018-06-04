@@ -9,7 +9,7 @@ LLVM_CONFIG_LD_LIBS=$(shell $(EXTERNAL_DIR)/bin/llvm-config --ldflags --libs all
 LLVM_CXX_CONFIG=$(subst -fno-exceptions,,$(LLVM_CXX_CONFIG_NOEH))
 
 INCLUDE_FLAGS=-g -I.. -I$(TOP_DIR) -I$(BOOST_DIR) -I$(EXTERNAL_DIR)/include -I$(EXTERNAL_DIR)/WALi-OpenNWA/Source $(LLVM_CXX_CONFIG) -I$(GTEST_DIR)/include
-LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) -L $(EXTERNAL_DIR)/lib -lz3 -L $(TOP_DIR)/src/AbstractDomain/PointsetPowerset -lPointsetPowersetAv -L $(TOP_DIR)/src/AbstractDomain/common -lAbstractDomain -L $(TOP_DIR)/utils -lUtils -L $(EXTERNAL_DIR)/WALi-OpenNWA/lib64 -lwali -lgmpxx -lgmp -lppl $(LLVM_CONFIG_LD_LIBS) $(GTEST_DIR)/make/gtest-all.o
+LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) -L $(EXTERNAL_DIR)/lib -L $(TOP_DIR)/src/AbstractDomain/PointsetPowerset -lPointsetPowersetAv -L $(TOP_DIR)/src/AbstractDomain/common -lAbstractDomain -L $(TOP_DIR)/utils -lUtils -L $(EXTERNAL_DIR)/WALi-OpenNWA/lib64 -lwali -lgmpxx -lgmp -lppl $(LLVM_CONFIG_LD_LIBS) $(GTEST_DIR)/make/gtest-all.o
 
 PointsetPowersetUnitTests: PointsetPowersetUnitTests.o PointsetPowerset common utils
 	gcc $(LINK_FLAGS) -o PointsetPowersetUnitTests PointsetPowersetUnitTests.o

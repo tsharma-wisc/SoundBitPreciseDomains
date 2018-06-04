@@ -11,18 +11,13 @@ These steps will install all the external dependencies to the $(SBD_DIR)/externa
    5) Finally, REQUIRES_RTTI=1 make -j <num_cpus>; make install
       (Building with RTTI is crucial to run SBD project as it heavily uses dynamic casts.)
    
-2) Z3:
-   1) unzip z3.zip && cd z3-master
-   2) python scripts/mk_make.py --prefix=$(SBD_DIR)/external
-   cd build; make; make install
-
-3) GMP: 
+2) GMP: 
    1) tar -xvf gmp-6.1.1.tar.bz2
    2) cd gmp-6.1.1
    3) ./configure --prefix=$(SBD_DIR)/external --enable-cxx
    4) make; make check; make install
 
-4) PPL:
+3) PPL:
    1) unzip ppl-1.2.zip && cd ppl-1.2
    1) ./configure --with-gmp=$(SBD_DIR)/external --prefix=$(SBD_DIR)/external
    2) make; make install
@@ -39,13 +34,44 @@ These steps will install all the external dependencies to the $(SBD_DIR)/externa
 6) WALi:
    1) In the external folder, git clone https://github.com/WaliDev/WALi-OpenNWA.git
    2) scons (Note that you need to install scons)
+   3) cp external/WALi-OpenNWA/lib64/libwali.so external/lib
 
 ----------------------------------------------------------------------------------------------------------------
 
-Building components:
-1) AbstractDomain: 
-   a) common: cd src/AbstractDomain/common && make
-2) Analysis: TODO
+Code components:
+1) utilities: utils
+2) AbstractDomain: 
+   a) common: src/AbstractDomain/common
+   b) PointsetPowerset: src/AbstractDomain/PointsetPowerset
+3) reinterpretation: src/reinterp/wrapped_domain 
+4) Analysis: src/analysis
+
+----------------------------------------------------------------------------------------------------------------
+
+Build Instructions:
+After setting up the external dependencies, 
+1) make
+2) make install
+
+----------------------------------------------------------------------------------------------------------------
+
+Running the analysis:
+1) Given a example file file.c, obtain the bitcode by the following command:
+   external/bin/clang -c -O -emit-llvm file.c -o file.bc
+2) LD_LIBRARY_PATH="/nobackup/tsharma/SoundBitPreciseDomains/external/lib;/nobackup/tsharma/SoundBitPreciseDomains/lib" bin/bvsfdAnalysis --filename file.bc --max-disjunctions 1
+   (LD_LIBRARY_PATH needs to be set to find the libraries.
+3) LD_LIBRARY_PATH="/nobackup/tsharma/SoundBitPreciseDomains/external/lib;/nobackup/tsharma/SoundBitPreciseDomains/lib" bin/bvsfdAnalysis -h to get a list of options.
+  (Alternatively, you can use the src/analysis/test/sv-benchmarks/c/wrapped_domain_analysis.py script, it needs python3. The python script can run a whole benchmark using the -i option. See the scripts in src/analysis/test/sv-benchmarks/c for examples.)
+
+----------------------------------------------------------------------------------------------------------------
+
+Benchmarks and scripts:
+1) Loop and array sv-bencharks are contained in: src/analysis/test/sv-benchmarks/c
+2) Several scripts are present that uses the python script to run the experiments:
+   a) src/analysis/test/sv-benchmarks/c/all-examples-oct-script.sh
+   b) src/analysis/test/sv-benchmarks/c/all-examples-poly-script.sh
+   c) src/analysis/test/sv-benchmarks/c/array-poly-script.sh
+   (These scripts need python3 to work.)
 
 ----------------------------------------------------------------------------------------------------------------
 
@@ -54,22 +80,13 @@ Running unit tests:
     (a) cd src/AbstractDomain/common/unittests
     (b) make
     (c) Running tests might need the LD_LIBRARY_PATH variable to be set:
-        LD_LIBRARY_PATH="$(SBD_DIR)/external/lib;$(SBD_DIR)/external/WALi-OpenNWA/lib64" CommonUnitTests
-
-....INCOMPLETE (TODO)....
+        LD_LIBRARY_PATH="$(SBD_DIR)/external/lib" CommonUnitTests
+2) PointsetPowerset:
+    (a) cd src/AbstractDomain/PointsetPowerset/unittests
+    (b) make
+    (c) Running tests might need the LD_LIBRARY_PATH variable to be set:
+        LD_LIBRARY_PATH="$(SBD_DIR)/external/lib" PointsetPowersetUnitTests
 
 ----------------------------------------------------------------------------------------------------------------
-
-Debugging concerns:
- (1) When trying to build a project on linux, if you run into GLIB issue or linking issues with ppl:
-     /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.10' not found
-     it suggests an issue with LD_LIBRARY_PATH. Try,
-     export LD_LIBRARY_PATH=/s/gcc-4.8./lib64:$LD_LIBRARY_PATH
- (2) If building unit tests or components fails such that error is in PPL code in external/include/ppl* header
-     files, then try changing external/ppl-1.2/ppl-config.h by commenting "#define PPL_HAVE_TYPEOF 1" and perform
-     make; make install for PPL again. 
-     (This is a non-compatibility issue of PPL with typeof. 
-      This is more likely be an issue with code that is built with c++0x and uses PPL.)
-
 
 For any other question, contact Tushar (tsharma@cs.wisc.edu)

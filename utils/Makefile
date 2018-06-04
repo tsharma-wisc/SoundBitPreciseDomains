@@ -8,7 +8,7 @@ LLVM_CXX_CONFIG=$(subst -fno-exceptions,,$(LLVM_CXX_CONFIG_NOEH))
 
 INCLUDE_FLAGS=-I.. -I$(TOP_DIR) -I$(BOOST_DIR) -I$(EXTERNAL_DIR)/include -I$(EXTERNAL_DIR)/WALi-OpenNWA/Source $(LLVM_CXX_CONFIG) -g -D_DEBUG
 CPP_FLAGS=-std=c++11
-LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) -L $(EXTERNAL_DIR)/lib $(LLVM_CONFIG_LD_LIBS)
+LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) $(LLVM_CONFIG_LD_LIBS)
 
 
 libUtils.a: DebugOptions.o gmpxx_utils.o value.o timer.o

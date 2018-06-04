@@ -42,13 +42,13 @@ WrappedDomain_Int& WrappedDomain_Int::operator=(const WrappedDomain_Int& that) {
 
 WrappedDomain_Int WrappedDomain_Int::top() const {
   wali::ref_ptr<AbstractValue> tp = wav_->Top();
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> tp_bpwav = static_cast<BitpreciseWrappedAbstractValue*>(tp.get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> tp_bpwav = dynamic_cast<BitpreciseWrappedAbstractValue*>(tp.get_ptr());
   return WrappedDomain_Int(tp_bpwav, k_);
 }
 
 WrappedDomain_Int WrappedDomain_Int::bottom() const {
   wali::ref_ptr<AbstractValue> btm = wav_->Bottom();
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> btm_bpwav = static_cast<BitpreciseWrappedAbstractValue*>(btm.get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> btm_bpwav = dynamic_cast<BitpreciseWrappedAbstractValue*>(btm.get_ptr());
   return WrappedDomain_Int(btm_bpwav, k_);
 }
 
@@ -90,7 +90,7 @@ WrappedDomain_Int WrappedDomain_Int::of_variable(const wali::ref_ptr<BitpreciseW
 
 WrappedDomain_Int WrappedDomain_Int::of_variable(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& weight_av, const DimensionKey& var, const Vocabulary& prevoc) {
   wali::ref_ptr<BitpreciseWrappedAbstractValue> weight 
-    = static_cast<BitpreciseWrappedAbstractValue*>(weight_av->Copy().get_ptr());
+    = dynamic_cast<BitpreciseWrappedAbstractValue*>(weight_av->Copy().get_ptr());
 
   utils::Bitsize bitsize = var.GetBitsize();
   
@@ -135,7 +135,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::get_one_voc_rel
 wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::assign_to_one_voc(DimensionKey var) const {
   wali::ref_ptr<BitpreciseWrappedAbstractValue> ret = new BitpreciseWrappedAbstractValue(*wav_);
   Vocabulary voc_var; voc_var.insert(var);
-  ret = static_cast<BitpreciseWrappedAbstractValue*>(ret->Havoc(voc_var).get_ptr());
+  ret = dynamic_cast<BitpreciseWrappedAbstractValue*>(ret->Havoc(voc_var).get_ptr());
 
   // Add constraint 1*k_ = 1*var
   AbstractValue::linexp_type constr_linexp_lhs;
@@ -160,7 +160,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::assign_to_two_v
   ret->AddVocabulary(target_voc);
 
   Vocabulary voc_var; voc_var.insert(var);
-  ret = static_cast<BitpreciseWrappedAbstractValue*>(ret->Havoc(voc_var).get_ptr());
+  ret = dynamic_cast<BitpreciseWrappedAbstractValue*>(ret->Havoc(voc_var).get_ptr());
 
   // Add constraint 1*k_ = 1*var
   AbstractValue::linexp_type constr_linexp_lhs;
@@ -298,7 +298,7 @@ bool WrappedDomain_Int::is_constant(mpz_class& val) const {
 // Return this having havocing k_ in av_
 WrappedDomain_Int WrappedDomain_Int::any_value() const {
   Vocabulary voc_k; voc_k.insert(k_);
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> any_val_av = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Havoc(voc_k).get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> any_val_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(wav_->Havoc(voc_k).get_ptr());
  
   return WrappedDomain_Int(any_val_av, k_);
 }
@@ -449,7 +449,7 @@ WrappedDomain_Int WrappedDomain_Int::div_helper(const mpz_class& that_mpz, bool 
   // Add equality k_=old_k and then havoc k_, so that essentially the key k_ is replaced with old_k
   ret.wav_->AddEquality(k_, old_k);
   Vocabulary voc_k; voc_k.insert(k_);
-  ret.wav_ = static_cast<BitpreciseWrappedAbstractValue*>(ret.wav_->Havoc(voc_k).get_ptr());
+  ret.wav_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(ret.wav_->Havoc(voc_k).get_ptr());
 
   // Add constraint old_k <= that*k_
   AbstractValue::linexp_type le_lhs2, le_rhs2;
@@ -543,7 +543,7 @@ WrappedDomain_Int WrappedDomain_Int::mod_helper(const mpz_class& that_mpz, bool 
   // Add equality k_ = old_k and then havoc k_, so that essentially the key k_ is replaced with old_k
   ret.wav_->AddEquality(k_, old_k);
   Vocabulary voc_k; voc_k.insert(k_);
-  ret.wav_ = static_cast<BitpreciseWrappedAbstractValue*>(ret.wav_->Havoc(voc_k).get_ptr());
+  ret.wav_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(ret.wav_->Havoc(voc_k).get_ptr());
 
   // Add constraint k_ >= 0
   AbstractValue::linexp_type le_lhs2;
@@ -830,7 +830,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::abs_not_equal(c
   AbstractValue::affexp_type ae_rhs1(le_rhs1, MPZ_ZERO);
   this_wrapped.wav_->AddConstraint(ae_lhs1, ae_rhs1, AbstractValue::EQ);
 
-  this_wrapped.wav_ = static_cast<BitpreciseWrappedAbstractValue*>(this_wrapped.wav_->Havoc(voc_k).get_ptr());
+  this_wrapped.wav_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(this_wrapped.wav_->Havoc(voc_k).get_ptr());
 
   // 3. Add the temp1 key to that_wrapped.av_
   that_wrapped.wav_->AddDimension(temp1);
@@ -838,7 +838,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::abs_not_equal(c
   // 4. Meet the two values in m1 and make a copy in m2
   wali::ref_ptr<BitpreciseWrappedAbstractValue> m1 = this_wrapped.wav_;
   m1->Meet(that_wrapped.wav_.get_ptr());
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> m2 = static_cast<BitpreciseWrappedAbstractValue*>(m1->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> m2 = dynamic_cast<BitpreciseWrappedAbstractValue*>(m1->Copy().get_ptr());
 
   // 5. Add constraints (k_ >= temp1 + 1) in m1, and (k_ <= temp1 - 1) in m2
   AbstractValue::linexp_type le1;
@@ -960,7 +960,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::less_than_or_eq
   AbstractValue::affexp_type ae_lhs1(le_lhs1, MPZ_ZERO);
   AbstractValue::affexp_type ae_rhs1(le_rhs1, MPZ_ZERO);
   wav_->AddConstraint(ae_lhs1, ae_rhs1, AbstractValue::EQ);
-  wav_ = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Havoc(voc_k).get_ptr());
+  wav_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(wav_->Havoc(voc_k).get_ptr());
 
   // 2. Add the temp1 key to that.wav_
   that.wav_->AddDimension(temp1);
@@ -987,14 +987,14 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::less_than_or_eq
 
 // Boolean and is simply a meet operation
 wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::boolean_and(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1, const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b2) {
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> ret = static_cast<BitpreciseWrappedAbstractValue*>(b1->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> ret = dynamic_cast<BitpreciseWrappedAbstractValue*>(b1->Copy().get_ptr());
   ret->Meet(b2.get_ptr());
   return ret;
 }
 
 // Boolean or is simply a join operation
 wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::boolean_or(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1, const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b2) {
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> ret = static_cast<BitpreciseWrappedAbstractValue*>(b1->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> ret = dynamic_cast<BitpreciseWrappedAbstractValue*>(b1->Copy().get_ptr());
   ret->Join(b2.get_ptr());
   return ret;
 }
@@ -1009,7 +1009,7 @@ wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::boolean_xor(con
 
 wali::ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomain_Int::boolean_not(const wali::ref_ptr<BitpreciseWrappedAbstractValue>& b1) {
   // Cannot express complement operation
-  return static_cast<BitpreciseWrappedAbstractValue*>(b1->Top().get_ptr()); 
+  return dynamic_cast<BitpreciseWrappedAbstractValue*>(b1->Top().get_ptr()); 
 }
 
 /* The algorithm for lin_combine:
@@ -1032,7 +1032,7 @@ WrappedDomain_Int WrappedDomain_Int::lin_combine (const WrappedDomain_Int& that,
 
   // 1. Change the key k_ in left value to temp1 and add new keys k_ and temp2
   // Create a copy of this_av as we will be modifying it
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> this_av = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> this_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(wav_->Copy().get_ptr());
   this_av->AddVocabulary(voc_temp1_2);
 
   // Add constraint 1*k_ = 1*temp1 and then havoc k_, so that essentially the key k_ is replaced with temp1
@@ -1042,11 +1042,11 @@ WrappedDomain_Int WrappedDomain_Int::lin_combine (const WrappedDomain_Int& that,
   AbstractValue::affexp_type ae_lhs1(le_lhs1, MPZ_ZERO);
   AbstractValue::affexp_type ae_rhs1(le_rhs1, MPZ_ZERO);
   this_av->AddConstraint(ae_lhs1, ae_rhs1, AbstractValue::EQ);
-  this_av = static_cast<BitpreciseWrappedAbstractValue*>(this_av->Havoc(voc_k).get_ptr());
+  this_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(this_av->Havoc(voc_k).get_ptr());
 
   // 2. Change the key k_ in right value to temp2 and add new keys k_ and temp1
   // Create a copy of that_av as we will be modifying it
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> that_av = static_cast<BitpreciseWrappedAbstractValue*>(that.wav_->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> that_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(that.wav_->Copy().get_ptr());
   that_av->AddVocabulary(voc_temp1_2);
 
   // Add constraint 1*k_ = 1*temp2 and then havoc k_, so that essentially the key k_ is replaced with temp2
@@ -1056,7 +1056,7 @@ WrappedDomain_Int WrappedDomain_Int::lin_combine (const WrappedDomain_Int& that,
   AbstractValue::affexp_type ae_lhs2(le_lhs2, MPZ_ZERO);
   AbstractValue::affexp_type ae_rhs2(le_rhs2, MPZ_ZERO);
   that_av->AddConstraint(ae_lhs2, ae_rhs2, AbstractValue::EQ);
-  that_av = static_cast<BitpreciseWrappedAbstractValue*>(that_av->Havoc(voc_k).get_ptr());
+  that_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(that_av->Havoc(voc_k).get_ptr());
 
   // 3. Meet the two values
   wali::ref_ptr<BitpreciseWrappedAbstractValue> ret_av = this_av;
@@ -1089,7 +1089,7 @@ WrappedDomain_Int WrappedDomain_Int::lin_transform (mpz_class new_coeff, mpz_cla
 
   // 1. Change the key k_ in this to old_k
   // Create a copy of this_av as we will be modifying it
-  wali::ref_ptr<BitpreciseWrappedAbstractValue> this_av = static_cast<BitpreciseWrappedAbstractValue*>(wav_->Copy().get_ptr());
+  wali::ref_ptr<BitpreciseWrappedAbstractValue> this_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(wav_->Copy().get_ptr());
   this_av->AddDimension(old_k);
 
   // Add constraint 1*k_ = 1*old_k and then havoc k_, so that essentially the key k_ is replaced with old_k
@@ -1099,7 +1099,7 @@ WrappedDomain_Int WrappedDomain_Int::lin_transform (mpz_class new_coeff, mpz_cla
   AbstractValue::affexp_type ae_lhs1(le_lhs1, MPZ_ZERO);
   AbstractValue::affexp_type ae_rhs1(le_rhs1, MPZ_ZERO);
   this_av->AddConstraint(ae_lhs1, ae_rhs1, AbstractValue::EQ);
-  this_av = static_cast<BitpreciseWrappedAbstractValue*>(this_av->Havoc(voc_k).get_ptr());
+  this_av = dynamic_cast<BitpreciseWrappedAbstractValue*>(this_av->Havoc(voc_k).get_ptr());
 
   // 2. Add constraint (new_coeff * new_k' + old_coeff * old_k + constant == 0)
   AbstractValue::linexp_type le_lincomb;

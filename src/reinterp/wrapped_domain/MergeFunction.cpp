@@ -48,11 +48,11 @@ sem_elem_t MergeFunction::apply_f(
   call_to_func_entry_->print(std::cout << "\ncall_to_func_entry_:");
 
   wali::ref_ptr<AbstractValue> caller_sum =
-    (static_cast<AvSemiring*>(call.get_ptr()))->GetAbstractValue()->Copy();
+    (dynamic_cast<AvSemiring*>(call.get_ptr()))->GetAbstractValue()->Copy();
   sem_elem_t call_extend_call_to_func_entry_extend_exit =
     call->extend(call_to_func_entry_)->extend(exit);
   wali::ref_ptr<AbstractValue> callee_sum =
-    (static_cast<AvSemiring*>(call_extend_call_to_func_entry_extend_exit.get_ptr()))->GetAbstractValue();
+    (dynamic_cast<AvSemiring*>(call_extend_call_to_func_entry_extend_exit.get_ptr()))->GetAbstractValue();
 
   caller_sum->print(std::cout << "\ncaller_sum:");
   callee_sum->print(std::cout << "\ncallee_sum:");
@@ -91,7 +91,7 @@ sem_elem_t MergeFunction::apply_f(
 
 bool MergeFunction::equal(wali::merge_fn_t _mf)
 {
-  const MergeFunction* mf = static_cast< const MergeFunction*>(_mf.get_ptr());
+  const MergeFunction* mf = dynamic_cast< const MergeFunction*>(_mf.get_ptr());
   return ((global_postvoc_callee_ == mf->global_postvoc_callee_)
           && (ret_key_callee_ == mf->ret_key_callee_)
           && (ret_key_caller_ == mf->ret_key_caller_));

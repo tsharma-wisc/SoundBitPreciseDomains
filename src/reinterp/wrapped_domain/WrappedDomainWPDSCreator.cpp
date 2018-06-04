@@ -186,10 +186,7 @@ BasicBlock::iterator WrappedDomainWPDSCreator::findNonModelCall(BasicBlock* bb, 
     CallInst* c = dynamic_cast<CallInst*>(I);
     if(c) {
       CallSite cs(c);
-      if(cs.getCalledFunction())
-        std::cout << "\ncs.getCalledFunction()->getName():" << cs.getCalledFunction()->getName().str();
       if(!isModel(cs.getCalledFunction())) {
-        std::cout << "\nIts not a model.";
         ci = c;
         start++;
         return start;
@@ -280,7 +277,7 @@ void WrappedDomainWPDSCreator::AddDelta2RuleToPds(ref_ptr<AbstractValue> state_c
   wali::wpds::ewpds::EWPDS* ewpds = dynamic_cast<wali::wpds::ewpds::EWPDS*>(pds_);
   if(ewpds) {
     ewpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf); } else {
-    wali::wpds::fwpds::FWPDS* fwpds = static_cast<wali::wpds::fwpds::FWPDS*>(pds_);
+    wali::wpds::fwpds::FWPDS* fwpds = dynamic_cast<wali::wpds::fwpds::FWPDS*>(pds_);
     fwpds->add_rule(program_, from_key, program_, callee_entry_key, to_key, w_delta2.get_ptr(), cf);
   }
   UpdateMinMaxVocabularySize(w_delta2->GetAbstractValue()->GetVocabulary().size());
@@ -356,7 +353,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
     // Handle the case when the basic block b contains a call instruction
     if(ci != NULL) {
       llvm::CallSite CS(ci);
-      if(CS.getCalledFunction()->getName() != "__VERIFIER_assert" && CS.getCalledFunction()->getName() != "assert") {
+      if(CS.getCalledFunction()->getName() != "__VERIFIER_assert") {
         // Use merge function to add delta 2 transitions
         BasicBlock *callee_entry_bb = &(CS.getCalledFunction()->getEntryBlock());
         callee_entry_key = mk_wpds_key(callee_entry_bb->begin(), callee_entry_bb, CS.getCalledFunction());
@@ -457,7 +454,7 @@ void WrappedDomainWPDSCreator::abstractExecuteBasicBlock
       state_tp->AddVocabulary(state_post_voc_as_pre);
       state_tp->Project(state_post_voc_as_pre_plus_post_voc);
       ref_ptr<AvSemiring> state_tp_av_sem = new AvSemiring(state_tp);
-      ref_ptr<AvSemiring> state_one_av_sem = static_cast<AvSemiring*>(state_tp_av_sem->one().get_ptr());
+      ref_ptr<AvSemiring> state_one_av_sem = dynamic_cast<AvSemiring*>(state_tp_av_sem->one().get_ptr());
       state = state_one_av_sem->GetAbstractValue();
       from_key = dummy_exit_key;
     } else {
@@ -729,7 +726,7 @@ ref_ptr<AvSemiring> WrappedDomainWPDSCreator::GetStartingState(const Vocabulary&
   ref_ptr<BitpreciseWrappedAbstractValue> top_wav = new BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
   ref_ptr<AvSemiring> av = new AvSemiring(top_wav, "", "", REGULAR_WEIGHT);
 
-  ref_ptr<BitpreciseWrappedAbstractValue> start_wav = static_cast<BitpreciseWrappedAbstractValue*>(static_cast<AvSemiring*>(av->one().get_ptr())->GetAbstractValue().get_ptr());
+  ref_ptr<BitpreciseWrappedAbstractValue> start_wav = dynamic_cast<BitpreciseWrappedAbstractValue*>(dynamic_cast<AvSemiring*>(av->one().get_ptr())->GetAbstractValue().get_ptr());
   
   // TODO: Get signedness information by type inference. For now, we assume everything is signed
   for(Vocabulary::const_iterator it = voc.begin(); it != voc.end(); it++) {

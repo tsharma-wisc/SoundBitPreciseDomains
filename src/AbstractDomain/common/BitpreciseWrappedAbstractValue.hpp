@@ -215,7 +215,7 @@ public:
       av_->Meet(that_wav_cp->av_);
     }
     this->voc_ = av_->GetVocabulary();
-    //UpdateVocabularySignedness(av_->GetVocabulary());
+    UpdateVocabularySignedness(av_->GetVocabulary());
   }
 
   virtual bool ImplementsExtend() { return true;}
@@ -399,14 +399,14 @@ public:
   virtual void AddConstraint(affexp_type lhs, affexp_type rhs, OpType op) {
     av_->AddConstraint(lhs, rhs, op);
 
-    // Vocabulary cnstr_voc;
-    // for(linexp_type::const_iterator it = lhs.first.begin(), end = lhs.first.end(); it != end; it++) {
-    //   cnstr_voc.insert(it->first);
-    // }
-    // for(linexp_type::const_iterator it = rhs.first.begin(), end = rhs.first.end(); it != end; it++) {
-    //   cnstr_voc.insert(it->first);
-    // }
-    // UpdateVocabularySignedness(cnstr_voc);
+    Vocabulary cnstr_voc;
+    for(linexp_type::const_iterator it = lhs.first.begin(), end = lhs.first.end(); it != end; it++) {
+       cnstr_voc.insert(it->first);
+    }
+    for(linexp_type::const_iterator it = rhs.first.begin(), end = rhs.first.end(); it != end; it++) {
+       cnstr_voc.insert(it->first);
+    }
+    UpdateVocabularySignedness(cnstr_voc);
   }
 
   virtual Vocabulary GetDependentVocabulary(DimensionKey& k) const {
@@ -525,7 +525,7 @@ private:
     for(;it1 != v1.end(); it1++) {
       VocabularySignedness::const_iterator it2_f = std::find(it2, v2.end(), *it1);
       // Sanity check to ensure that the both vocabulary signedness are sound with respect to each other
-      assert(it2_f == v2.end() || it1->second == it2_f->second);
+      assert( (it2_f == v2.end()) || (it1->second == it2_f->second));
       result.insert(*it1);
     }
 

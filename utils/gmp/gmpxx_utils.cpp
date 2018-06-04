@@ -66,20 +66,20 @@ namespace utils {
         break;
       case sixteen:
         if(is_signed) {
-          mpz_set_si(ret_mpz_t, (long int)(SHORT)(c.bv16_));
+          mpz_set_si(ret_mpz_t, (INT)(SHORT)(c.bv16_));
         } else {
-          mpz_set_ui(ret_mpz_t, (long unsigned int)(USHORT)(c.bv16_));
+          mpz_set_ui(ret_mpz_t, (UINT)(USHORT)(c.bv16_));
         }
         break;
       case eight:
         if(is_signed) {
-          mpz_set_si(ret_mpz_t, (long int)(CHAR)(c.bv8_));
+          mpz_set_si(ret_mpz_t, (INT)(CHAR)(c.bv8_));
         } else {
-          mpz_set_ui(ret_mpz_t, (long unsigned int)(UCHAR)(c.bv8_));
+          mpz_set_ui(ret_mpz_t, (UINT)(UCHAR)(c.bv8_));
         }
         break;
       case one:
-        mpz_set_si(ret_mpz_t, (long int)(c.bv1_));
+        mpz_set_si(ret_mpz_t, (INT)(c.bv1_));
         break;
       }
 

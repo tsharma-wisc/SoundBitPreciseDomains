@@ -2,7 +2,7 @@
 
 import sys, getopt
 import os
-from os import environ
+from os import environ, path
 import subprocess
 from subprocess import Popen
 import logging
@@ -76,8 +76,8 @@ def main(argv):
 
 
    env = dict(os.environ)
-   env['LD_LIBRARY_PATH'] = ''
-
+   env['LD_LIBRARY_PATH'] = os.path.abspath("../../../../../external/lib") + ";" + os.path.abspath("../../../../../lib")
+   print('Using LD_LIBRARY_PATH ', env['LD_LIBRARY_PATH'])
    inputfile = open(inputfilestr)
 
    # Store the result of running each example in result 
@@ -98,7 +98,7 @@ def main(argv):
      line_log = line_woext + '.log'
      logfile = open(line_log, 'w')
      print('line_bc is ', line_bc)
-     args_cl = "../../../../../../llvm/build/bin/clang -c -O0 -emit-llvm " + line + " -o " + line_bc
+     args_cl = "../../../../../external/bin/clang -c -O0 -emit-llvm " + line + " -o " + line_bc
      try:
        print("Executing " + args_cl)
        p_cl = subprocess.Popen(args_cl, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
@@ -111,7 +111,7 @@ def main(argv):
        continue
 
      if array_bounds_check:
-       args_opt = "../../../../../../llvm/build/bin/opt -bounds-checking -stats " + line_bc + " -o " + line_bc
+       args_opt = "../../../../../external/bin/opt -bounds-checking -stats " + line_bc + " -o " + line_bc
        try:
          print("Executing " + args_opt)
          p_opt = subprocess.Popen(args_opt, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
@@ -124,19 +124,19 @@ def main(argv):
 
      sys.stdout.flush()
      start = time.time()
-     args = "../../../build/scons/gprof/llvm_wrappedomain_abs_interp.out -filename " + line_bc + " -max_disjunctions " + max_disjunctions + " -debug_print_level " + debug_level
+     args = "../../../../../bin/bvsfdAnalysis --filename " + line_bc + " --max_disjunctions " + max_disjunctions + " --debug_print_level " + debug_level
      if array_bounds_check:
-       args = args + " -array_bounds_check"
+       args = args + " --array_bounds_check"
      if use_oct:
-       args = args + " -use_oct"
+       args = args + " --use_oct"
      if use_extrapolation:
-       args = args + " -use_extrapolation"
+       args = args + " --use_extrapolation"
      if perform_narrowing:
-       args = args + " -perform_narrowing"
+       args = args + " --perform_narrowing"
      if allow_phis:
-       args = args + " -allow_phis"
+       args = args + " --allow_phis"
      if disable_wrapping:
-       args = args + " -disable_wrapping"
+       args = args + " --disable_wrapping"
 
      try:
        print('Executing ', args)

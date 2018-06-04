@@ -3,6 +3,8 @@
 *~
 *.a
 *.bc
+*.bc.result
+*.bc_human_readable.txt
 *.log
 *.out
 external/bin

@@ -312,8 +312,8 @@ namespace {
         result = fglobal;
 
       // Handle load instruction separately
-      if(llvm::LoadInst::classof(instruct)) {
-        llvm::LoadInst* LI = static_cast<llvm::LoadInst*>(instruct);
+        llvm::LoadInst* LI = dynamic_cast<llvm::LoadInst*>(instruct);
+      if(LI) {
         abstract_domain::DimensionKey k;
         bool isalloca = llvm_abstract_transformer::isLoadAddrInAllocaMap(alloca_map, LI, *TD_, k);
         if(isalloca)
@@ -341,16 +341,16 @@ namespace {
       abstract_domain::Vocabulary result;
 
       // Handle store instruction separately
-      if(llvm::StoreInst::classof(instruct)) {
-        llvm::StoreInst* SI = static_cast<llvm::StoreInst*>(instruct);
+      llvm::StoreInst* SI = dynamic_cast<llvm::StoreInst*>(instruct);
+      if(SI) {
         abstract_domain::DimensionKey k;
         bool isalloca = llvm_abstract_transformer::isStoreAddrInAllocaMap(alloca_map, SI, *TD_, k);
         if(isalloca)
           result.insert(k);
       } else {
         // Handle ret instruction
-        if(llvm::ReturnInst::classof(instruct)) {
-          llvm::ReturnInst* RI = static_cast<llvm::ReturnInst*>(instruct);
+        llvm::ReturnInst* RI = dynamic_cast<llvm::ReturnInst*>(instruct);
+        if(RI) {
           // For return instruction return the return vocabulary fret as the vocabulary defined by this instr
           if (instruct->getNumOperands()) {
             return fret;

@@ -95,9 +95,9 @@ namespace llvm_abstract_transformer {
       std::map<DimensionKey, bool> vocab_sign;
       state_ = new BitpreciseWrappedAbstractValue(av_dvoc_top, vocab_sign);
       ref_ptr<AvSemiring> av_sem = new AvSemiring(state_);
-      ref_ptr<AvSemiring> one = static_cast<AvSemiring*>(av_sem->one().get_ptr());
+      ref_ptr<AvSemiring> one = dynamic_cast<AvSemiring*>(av_sem->one().get_ptr());
       one->SetToSyntacticOne();
-      state_ = static_cast<BitpreciseWrappedAbstractValue*>(one->GetAbstractValue().get_ptr());
+      state_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(one->GetAbstractValue().get_ptr());
     }
 
     state_->AddVocabulary(bb_voc);
@@ -127,17 +127,17 @@ namespace llvm_abstract_transformer {
   }
 
   ref_ptr<BitpreciseWrappedAbstractValue> WrappedDomainBBAbsTransCreator::GetBitpreciseWrappedState(ref_ptr<AbstractValue> st) const {
-    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = static_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
+    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = dynamic_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
     assert(bpwav != NULL);
     if(false/*add_array_bounds_check_*/) {
-      ref_ptr<ReducedProductAbsVal> rpav = static_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
+      ref_ptr<ReducedProductAbsVal> rpav = dynamic_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
       assert(rpav != NULL);
 
       ref_ptr<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav =
-        static_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
+        dynamic_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
       assert(eqav != NULL && eqav->equalities_only());
       ref_ptr<ReducedProductAbsVal> rpav_first =
-        static_cast<ReducedProductAbsVal*>(rpav->first().get_ptr());
+        dynamic_cast<ReducedProductAbsVal*>(rpav->first().get_ptr());
     assert(rpav_first == NULL);
       return new BitpreciseWrappedAbstractValue(rpav->first(), bpwav->wrapped_voc());
     }
@@ -145,16 +145,16 @@ namespace llvm_abstract_transformer {
   }
 
   void WrappedDomainBBAbsTransCreator::SetState(ref_ptr<AbstractValue> st) {
-    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = static_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
+    ref_ptr<BitpreciseWrappedAbstractValue> bpwav = dynamic_cast<BitpreciseWrappedAbstractValue*>(st.get_ptr());
     assert(bpwav != NULL);
     state_ = bpwav;
 
     // Sanity check
     if(false/*add_array_bounds_check_*/) {
-      ref_ptr<ReducedProductAbsVal> rpav = static_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
+      ref_ptr<ReducedProductAbsVal> rpav = dynamic_cast<ReducedProductAbsVal*>(bpwav->av().get_ptr());
       assert(rpav != NULL);
       ref_ptr<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> > eqav =
-        static_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
+        dynamic_cast<PointsetPowersetAv<Parma_Polyhedra_Library::C_Polyhedron> *>(rpav->second().get_ptr());
       assert(eqav != NULL && eqav->equalities_only());
     }
   }
@@ -360,28 +360,23 @@ namespace llvm_abstract_transformer {
   // Additionally, f is a model when it is null or when it is an indirect call.
   // Note that the __VERIFIER_assert is handled specially by WrappedDomainWPDSCreator
   bool WrappedDomainBBAbsTransCreator::isModel(const Function *f) const {
-    if(!f)
-      return true;
-    if(f->getName() == "__VERIFIER_assert" || f->getName() == "assert")
-      return false;
-    bool is_decl = f->isDeclaration();
+    bool is_decl = (!f || (f && f->isDeclaration()));
     if(is_decl)
       return true;
 
     // Handle __VERIFIER* functions
     if(f->getName() == "__VERIFIER_assume" || f->getName() == "__VERIFIER_error" || f->getName() == "__VERIFIER_nondet_int")
       return true;
-
     return false;
   }
 
 
-  // Creates the merge function if the function is defined else create a model transformer and set is_model to true
+  // Creates the merge function for non-model functions
   wali::IMergeFn* WrappedDomainBBAbsTransCreator::obtainMergeFunc(llvm::CallSite& cs) {
     utils::Timer timer("obtainMergeFunction:", std::cout, true);
 
     // Check to see if this is a non-model function call
-    assert (isModel(cs.getCalledFunction()));
+    assert (!isModel(cs.getCalledFunction()));
 
     Function *called_func = cs.getCalledFunction();
     Type* t = called_func->getReturnType();
@@ -1390,7 +1385,7 @@ namespace llvm_abstract_transformer {
     DEBUG_PRINTING(DBG_PRINT_EVERYTHING,
                    print(std::cout << "\nstate_ before havoc:");
                    abstract_domain::print(std::cout << "\nk_prime_voc:", k_prime_voc););
-    state_ = static_cast<BitpreciseWrappedAbstractValue*>(state_->Havoc(k_prime_voc).get_ptr());
+    state_ = dynamic_cast<BitpreciseWrappedAbstractValue*>(state_->Havoc(k_prime_voc).get_ptr());
     Vocabulary state_voc = state_->GetVocabulary();
     DEBUG_PRINTING(DBG_PRINT_EVERYTHING,
                    print(std::cout << "\nstate_ after havoc:"););
@@ -1480,7 +1475,7 @@ namespace llvm_abstract_transformer {
                   std::cout << "\nResult is constant:" << val;
                   found = true;
                   ref_ptr<BitpreciseWrappedAbstractValue> bot =
-                    static_cast<BitpreciseWrappedAbstractValue*>(top->Bottom().get_ptr());
+                    dynamic_cast<BitpreciseWrappedAbstractValue*>(top->Bottom().get_ptr());
                   if(val == 1)
                     return std::make_pair(top, bot);
                   else if(val == 0)

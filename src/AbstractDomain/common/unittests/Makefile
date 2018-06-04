@@ -1,4 +1,4 @@
-TOP_DIR=../../../..
+TOP_DIR=$(CURDIR)/../../../..
 SRC_DIR=..
 EXTERNAL_DIR=$(TOP_DIR)/external
 GTEST_DIR=$(EXTERNAL_DIR)/googletest-master/googletest
@@ -9,7 +9,7 @@ LLVM_CONFIG_LD_LIBS=$(shell $(EXTERNAL_DIR)/bin/llvm-config --ldflags --libs all
 LLVM_CXX_CONFIG=$(subst -fno-exceptions,,$(LLVM_CXX_CONFIG_NOEH))
 
 INCLUDE_FLAGS=-g -I.. -I$(TOP_DIR) -I$(BOOST_DIR) -I$(EXTERNAL_DIR)/include $(LLVM_CXX_CONFIG) -I$(GTEST_DIR)/include
-LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) -L $(EXTERNAL_DIR)/lib -lz3 -L $(TOP_DIR)/src/AbstractDomain/common -lAbstractDomain -L $(TOP_DIR)/utils -lUtils -L $(EXTERNAL_DIR)/WALi-OpenNWA/lib64 -lwali -lgmpxx -lppl $(LLVM_CONFIG_LD_LIBS) $(GTEST_DIR)/make/gtest-all.o
+LINK_FLAGS=-lstdc++ $(LLVM_CXX_CONFIG) -L $(EXTERNAL_DIR)/lib -L $(TOP_DIR)/src/AbstractDomain/common -lAbstractDomain -L $(TOP_DIR)/utils -lUtils -L $(EXTERNAL_DIR)/WALi-OpenNWA/lib64 -lwali -lgmpxx -lppl $(LLVM_CONFIG_LD_LIBS) $(GTEST_DIR)/make/gtest-all.o
 
 CommonUnitTests: dimension__unit_tests.o common utils
 	gcc $(LINK_FLAGS) -o CommonUnitTests dimension__unit_tests.o

@@ -136,6 +136,7 @@ namespace llvm_abstract_transformer {
         unsigned numbits = t->getPrimitiveSizeInBits();
         utils::Bitsize bitsize = utils::GetBitsize(numbits);
         k = abstract_domain::DimensionKey(name, ver, bitsize);
+        return true;
       }
       break;
     case llvm::Type::FloatTyID:
@@ -208,14 +209,12 @@ namespace llvm_abstract_transformer {
   Vocabulary CreateAllocaVocabulary(llvm::Function* f, Version ver, const llvm::DataLayout& TD, std::map<llvm::Value*, std::pair<DimensionKey, unsigned> >& alloca_map) {
     Vocabulary v;
     alloca_map.clear();
-    unsigned stack_addr = 0xff000000;
     for(llvm::Function::BasicBlockListType::iterator bbit = f->getBasicBlockList().begin(); bbit != f->getBasicBlockList().end(); bbit++) {
       llvm::BasicBlock* bb = bbit;
       for(llvm::BasicBlock::iterator inst_it = bb->begin(); inst_it != bb->end(); inst_it++) {
         llvm::Instruction* I = inst_it;
-        if(I->getOpcode() == llvm::Instruction::Alloca) {
-          llvm::AllocaInst* ai = static_cast<llvm::AllocaInst*>(I);
-
+        llvm::AllocaInst* ai = dynamic_cast<llvm::AllocaInst*>(I);
+        if(ai) {
           // Type to be allocated          
           llvm::Type *Ty = ai->getType()->getElementType();  
           unsigned TypeSize = (size_t)TD.getTypeAllocSize(Ty);
@@ -225,9 +224,9 @@ namespace llvm_abstract_transformer {
           // cannot handle it
           bool is_const = false;
           llvm::APInt NumElements;
-          if(llvm::Constant* C = static_cast<llvm::Constant*>(I->getOperand(0))) {
-            if(C->getType()->getTypeID() == llvm::Type::IntegerTyID) {
-              NumElements = static_cast<llvm::ConstantInt*>(C)->getValue();
+          if(llvm::ConstantInt* C = dynamic_cast<llvm::ConstantInt*>(ai->getOperand(0))) {
+            if(C) {
+              NumElements = C->getValue();
               is_const = true;
             }
           }
@@ -242,6 +241,8 @@ namespace llvm_abstract_transformer {
             if(is_dim) {
               k_addr = k; //k is symbolic, hence set k_addr to k
             }
+            alloca_map.insert(std::pair<llvm::Value*, std::pair<DimensionKey, unsigned> >(I, std::make_pair(k_addr, TypeSize))); 
+            v.insert(k);
           }
         }
       }
@@ -379,7 +380,7 @@ namespace llvm_abstract_transformer {
 
     // Handle load/store by looking them up in alloca_map and if present add them to v
     // Handle load instruction separately
-    llvm::LoadInst* LI = static_cast<llvm::LoadInst*>(I);
+    llvm::LoadInst* LI = dynamic_cast<llvm::LoadInst*>(I);
     if(LI) {
       DimensionKey k;
       bool isalloca = isLoadAddrInAllocaMap(alloca_map, LI, TD, k);
@@ -387,7 +388,7 @@ namespace llvm_abstract_transformer {
         v.insert(abstract_domain::replaceVersion(k, 0, 1));
       }
     } else {
-      llvm::StoreInst* SI = static_cast<llvm::StoreInst*>(I);
+      llvm::StoreInst* SI = dynamic_cast<llvm::StoreInst*>(I);
       if(SI) {
         DimensionKey k;
         bool isalloca = isStoreAddrInAllocaMap(alloca_map, SI, TD, k);
@@ -512,8 +513,8 @@ namespace llvm_abstract_transformer {
       llvm::BasicBlock* bb = bb_it;
       for(llvm::BasicBlock::iterator inst_it = bb->begin(); inst_it != bb->end(); inst_it++) {
         llvm::Instruction *I = inst_it;
-        if(I->getOpcode() == llvm::Instruction::PHI) {
-          llvm::PHINode* PN = static_cast<llvm::PHINode*>(I);
+        llvm::PHINode* PN = dynamic_cast<llvm::PHINode*>(I);
+        if(PN) {
           bool possible_cyclic_value_dependency = false;
           for(unsigned i = 0; i < PN->getNumIncomingValues(); i++) {
             // Find the values in phi which comes from self loop
